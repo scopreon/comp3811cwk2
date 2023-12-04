@@ -56,28 +56,6 @@ constexpr Mat44f kIdentity44f = { {
 // Common operators for Mat44f.
 // Note that you will need to implement these yourself.
 
-constexpr
-Mat44f operator*( Mat44f const& aLeft, Mat44f const& aRight ) noexcept
-{
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aLeft;   // Avoid warnings about unused arguments until the function
-	(void)aRight;  // is properly implemented.
-	return kIdentity44f;
-}
-
-constexpr
-Vec4f operator*( Mat44f const& aLeft, Vec4f const& aRight ) noexcept
-{
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aLeft;   // Avoid warnings about unused arguments until the function
-	(void)aRight;  // is properly implemented.
-	return { 0.f, 0.f, 0.f, 0.f };
-}
-
-// Functions:
-
 Mat44f invert( Mat44f const& aM ) noexcept;
 
 inline
@@ -92,70 +70,113 @@ Mat44f transpose( Mat44f const& aM ) noexcept
 	return ret;
 }
 
-inline
-Mat44f make_rotation_x( float aAngle ) noexcept
+
+constexpr
+Mat44f operator*(Mat44f const& aLeft, Mat44f const& aRight) noexcept
 {
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aAngle; // Avoid warnings about unused arguments until the function
-	              // is properly implemented.
-	return kIdentity44f;
+    return Mat44f{
+        aLeft.v[0] * aRight.v[0] + aLeft.v[1] * aRight.v[4] + aLeft.v[2] * aRight.v[8] + aLeft.v[3] * aRight.v[12],
+        aLeft.v[0] * aRight.v[1] + aLeft.v[1] * aRight.v[5] + aLeft.v[2] * aRight.v[9] + aLeft.v[3] * aRight.v[13],
+        aLeft.v[0] * aRight.v[2] + aLeft.v[1] * aRight.v[6] + aLeft.v[2] * aRight.v[10] + aLeft.v[3] * aRight.v[14],
+        aLeft.v[0] * aRight.v[3] + aLeft.v[1] * aRight.v[7] + aLeft.v[2] * aRight.v[11] + aLeft.v[3] * aRight.v[15],
+
+        aLeft.v[4] * aRight.v[0] + aLeft.v[5] * aRight.v[4] + aLeft.v[6] * aRight.v[8] + aLeft.v[7] * aRight.v[12],
+        aLeft.v[4] * aRight.v[1] + aLeft.v[5] * aRight.v[5] + aLeft.v[6] * aRight.v[9] + aLeft.v[7] * aRight.v[13],
+        aLeft.v[4] * aRight.v[2] + aLeft.v[5] * aRight.v[6] + aLeft.v[6] * aRight.v[10] + aLeft.v[7] * aRight.v[14],
+        aLeft.v[4] * aRight.v[3] + aLeft.v[5] * aRight.v[7] + aLeft.v[6] * aRight.v[11] + aLeft.v[7] * aRight.v[15],
+
+        aLeft.v[8] * aRight.v[0] + aLeft.v[9] * aRight.v[4] + aLeft.v[10] * aRight.v[8] + aLeft.v[11] * aRight.v[12],
+        aLeft.v[8] * aRight.v[1] + aLeft.v[9] * aRight.v[5] + aLeft.v[10] * aRight.v[9] + aLeft.v[11] * aRight.v[13],
+        aLeft.v[8] * aRight.v[2] + aLeft.v[9] * aRight.v[6] + aLeft.v[10] * aRight.v[10] + aLeft.v[11] * aRight.v[14],
+        aLeft.v[8] * aRight.v[3] + aLeft.v[9] * aRight.v[7] + aLeft.v[10] * aRight.v[11] + aLeft.v[11] * aRight.v[15],
+
+        aLeft.v[12] * aRight.v[0] + aLeft.v[13] * aRight.v[4] + aLeft.v[14] * aRight.v[8] + aLeft.v[15] * aRight.v[12],
+        aLeft.v[12] * aRight.v[1] + aLeft.v[13] * aRight.v[5] + aLeft.v[14] * aRight.v[9] + aLeft.v[15] * aRight.v[13],
+        aLeft.v[12] * aRight.v[2] + aLeft.v[13] * aRight.v[6] + aLeft.v[14] * aRight.v[10] + aLeft.v[15] * aRight.v[14],
+        aLeft.v[12] * aRight.v[3] + aLeft.v[13] * aRight.v[7] + aLeft.v[14] * aRight.v[11] + aLeft.v[15] * aRight.v[15]
+    };
 }
 
 
-inline
-Mat44f make_rotation_y( float aAngle ) noexcept
+constexpr 
+Vec4f operator*(Mat44f const& aLeft, Vec4f const& aRight) noexcept
 {
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aAngle; // Avoid warnings about unused arguments until the function
-	              // is properly implemented.
-	return kIdentity44f;
-}
-
-inline
-Mat44f make_rotation_z( float aAngle ) noexcept
-{
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aAngle; // Avoid warnings about unused arguments until the function
-	              // is properly implemented.
-	return kIdentity44f;
-}
-
-inline
-Mat44f make_translation( Vec3f aTranslation ) noexcept
-{
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aTranslation; // Avoid warnings about unused arguments until the function
-	                    // is properly implemented.
-	return kIdentity44f;
-}
-
-inline
-Mat44f make_scaling( float aSX, float aSY, float aSZ ) noexcept
-{
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aSX;  // Avoid warnings about unused arguments until the function
-	(void)aSY;  // is properly implemented.
-	(void)aSZ;
-	return kIdentity44f;
+    return Vec4f{
+        aLeft.v[0] * aRight.x + aLeft.v[1] * aRight.y + aLeft.v[2] * aRight.z + aLeft.v[3] * aRight.w,
+        aLeft.v[4] * aRight.x + aLeft.v[5] * aRight.y + aLeft.v[6] * aRight.z + aLeft.v[7] * aRight.w,
+        aLeft.v[8] * aRight.x + aLeft.v[9] * aRight.y + aLeft.v[10] * aRight.z + aLeft.v[11] * aRight.w,
+        aLeft.v[12] * aRight.x + aLeft.v[13] * aRight.y + aLeft.v[14] * aRight.z + aLeft.v[15] * aRight.w
+    };
 }
 
 
-inline
-Mat44f make_perspective_projection( float aFovInRadians, float aAspect, float aNear, float aFar ) noexcept
+// Functions:
+
+inline Mat44f make_rotation_x(float aAngle) noexcept
 {
-	//TODO: your implementation goes here
-	//TODO: remove the following when you start your implementation
-	(void)aFovInRadians; // Avoid warnings about unused arguments until the function
-	(void)aAspect;       // is properly implemented.
-	(void)aNear;
-	(void)aFar;
-	return kIdentity44f;
+    const float cosA = std::cos(aAngle);
+    const float sinA = std::sin(aAngle);
+
+    return Mat44f{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, cosA, -sinA, 0.0f,
+        0.0f, sinA, cosA, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 }
+
+inline Mat44f make_rotation_y(float aAngle) noexcept
+{
+    const float cosA = std::cos(aAngle);
+    const float sinA = std::sin(aAngle);
+
+    return Mat44f{
+        cosA, 0.0f, sinA, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        -sinA, 0.0f, cosA, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}
+
+inline Mat44f make_rotation_z(float aAngle) noexcept
+{
+    const float cosA = std::cos(aAngle);
+    const float sinA = std::sin(aAngle);
+
+    return Mat44f{
+        cosA, -sinA, 0.0f, 0.0f,
+        sinA, cosA, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}
+
+
+inline Mat44f make_translation(Vec3f aTranslation) noexcept
+{
+    return Mat44f{
+        1.0f, 0.0f, 0.0f, aTranslation.x,
+        0.0f, 1.0f, 0.0f, aTranslation.y,
+        0.0f, 0.0f, 1.0f, aTranslation.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}
+
+inline Mat44f make_perspective_projection(float aFovInRadians, float aAspect, float aNear, float aFar) noexcept
+{
+    const float tanHalfFov = std::tan(aFovInRadians / 2.0f);
+    const float scaleY = 1.0f / tanHalfFov;
+    const float scaleX = scaleY / aAspect;
+    const float frustumLength = aFar - aNear;
+
+    return Mat44f{
+        scaleX, 0.0f, 0.0f, 0.0f,
+        0.0f, scaleY, 0.0f, 0.0f,
+        0.0f, 0.0f, -(aFar + aNear) / frustumLength, -2.0f * aFar * aNear / frustumLength,
+        0.0f, 0.0f, -1.0f, 0.0f
+    };
+}
+
 
 
 
