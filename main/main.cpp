@@ -173,25 +173,12 @@ int main() try {
 
   std::size_t vertexCount = 0;
 
-  for (int i = 0; i < 1; i++) {
-    for (int j = 0; j < 1; j++) {
-      auto armadillo = load_wavefront_obj("assets/parlahti.obj");
-      //    load_wavefront_obj("assets/Armadillo.obj");
-      Mat44f translation = make_translation(Vec3f{i * 5.f, 0.f, j * 5.f});
-      for (auto &p : armadillo.positions) {
-        Vec4f p4{p.x, p.y, p.z, 1.f};
-        Vec4f t = translation * p4;
-        t /= t.w;
+  auto map = load_wavefront_obj("assets/parlahti.obj");
+  //    load_wavefront_obj("assets/Armadillo.obj");
 
-        Vec3f pTransformed{t.x, t.y, t.z};
-        p = pTransformed;
-      }
-
-      GLuint vao = create_vao(armadillo);
-      vaos.push_back(vao);
-      vertexCount = armadillo.positions.size();
-    }
-  }
+  GLuint vao = create_vao(map);
+  vaos.push_back(vao);
+  vertexCount = map.positions.size();
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -236,14 +223,36 @@ int main() try {
       angle -= 2.f * kPi_;
 
     // Update camera state
-    if (state.camControl.moveForward)
-      state.camControl.x -= kMovementPerSecond_ * dt;
-    else if (state.camControl.moveBackward)
-      state.camControl.x += kMovementPerSecond_ * dt;
-    if (state.camControl.moveLeft)
-      state.camControl.y -= kMovementPerSecond_ * dt;
-    else if (state.camControl.moveRight)
-      state.camControl.y += kMovementPerSecond_ * dt;
+    // Assuming state.camControl.theta and state.camControl.phi are the camera
+    // direction angles
+
+    if (state.camControl.moveForward) {
+      state.camControl.x -=
+          kMovementPerSecond_ * dt * sin(state.camControl.phi);
+      state.camControl.y +=
+          kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.z -=
+          kMovementPerSecond_ * dt * cos(state.camControl.phi);
+    } else if (state.camControl.moveBackward) {
+      state.camControl.x +=
+          kMovementPerSecond_ * dt * sin(state.camControl.phi);
+      state.camControl.y -=
+          kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.z +=
+          kMovementPerSecond_ * dt * cos(state.camControl.phi);
+    }
+
+    if (state.camControl.moveLeft) {
+      state.camControl.x +=
+          kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z +=
+          kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+    } else if (state.camControl.moveRight) {
+      state.camControl.x -=
+          kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z -=
+          kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+    }
 
     // if (state.camControl.radius <= 0.1f)
     //   state.camControl.radius = 0.1f;
@@ -358,7 +367,8 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
           state->camControl.moveBackward = true;
         else if (GLFW_RELEASE == aAction)
           state->camControl.moveBackward = false;
-      } if (GLFW_KEY_A == aKey) {
+      }
+      if (GLFW_KEY_A == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.moveLeft = true;
         else if (GLFW_RELEASE == aAction)
@@ -387,7 +397,8 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       else if (state->camControl.theta < -kPi_ / 2.f)
         state->camControl.theta = -kPi_ / 2.f;
     }
-    printf("phi: %f, theta: %f\n", state->camControl.phi, state->camControl.theta);
+    printf("phi: %f, theta: %f\n", state->camControl.phi,
+           state->camControl.theta);
 
     state->camControl.lastX = float(aX);
     state->camControl.lastY = float(aY);
