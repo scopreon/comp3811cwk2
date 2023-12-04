@@ -236,14 +236,26 @@ int main() try {
       angle -= 2.f * kPi_;
 
     // Update camera state
-    if (state.camControl.moveForward)
-      state.camControl.x -= kMovementPerSecond_ * dt;
-    else if (state.camControl.moveBackward)
-      state.camControl.x += kMovementPerSecond_ * dt;
-    if (state.camControl.moveLeft)
-      state.camControl.y -= kMovementPerSecond_ * dt;
-    else if (state.camControl.moveRight)
-      state.camControl.y += kMovementPerSecond_ * dt;
+// Assuming state.camControl.theta and state.camControl.phi are the camera direction angles
+
+if (state.camControl.moveForward) {
+  state.camControl.x -= kMovementPerSecond_ * dt * sin(state.camControl.phi);
+  state.camControl.y += kMovementPerSecond_ * dt * sin(state.camControl.theta);
+  state.camControl.z -= kMovementPerSecond_ * dt * cos(state.camControl.phi);
+} else if (state.camControl.moveBackward) {
+  state.camControl.x += kMovementPerSecond_ * dt * sin(state.camControl.phi);
+  state.camControl.y -= kMovementPerSecond_ * dt * sin(state.camControl.theta);
+  state.camControl.z += kMovementPerSecond_ * dt * cos(state.camControl.phi);
+}
+
+if (state.camControl.moveLeft) {
+  state.camControl.x += kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_/2.f);
+  state.camControl.z += kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_/2.f);
+} else if (state.camControl.moveRight) {
+  state.camControl.x -= kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_/2.f);
+  state.camControl.z -= kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_/2.f);
+}
+
 
     // if (state.camControl.radius <= 0.1f)
     //   state.camControl.radius = 0.1f;
