@@ -1,4 +1,5 @@
 // clang-format off
+#include <cstddef>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
@@ -15,6 +16,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
 
 #include "../support/checkpoint.hpp"
 #include "../support/debug_output.hpp"
@@ -170,15 +172,43 @@ int main() try {
   float angle = 0.f;
 
   std::vector<GLuint> vaos;
-
+  std::vector<std::size_t> vertexCounts;
   std::size_t vertexCount = 0;
 
   auto map = load_wavefront_obj("assets/parlahti.obj");
-  //    load_wavefront_obj("assets/Armadillo.obj");
-
   GLuint vao = create_vao(map);
   vaos.push_back(vao);
-  vertexCount = map.positions.size();
+  vertexCounts.push_back(map.positions.size());
+
+  auto launchhpad = load_wavefront_obj("assets/landingpad.obj");
+  for (auto &p : launchhpad.positions) {
+    Vec4f p4{p.x, p.y, p.z, 1.f};
+    Vec4f t = make_translation(Vec3f{-10.f,-0.9f,15.f}) * p4;
+    t /= t.w;
+
+    Vec3f pTransformed{t.x, t.y, t.z};
+    // Rest of your code...
+    p = pTransformed;
+  }
+
+  vao = create_vao(launchhpad);
+  vaos.push_back(vao);
+  vertexCounts.push_back(launchhpad.positions.size());
+
+  launchhpad = load_wavefront_obj("assets/landingpad.obj");
+  for (auto &p : launchhpad.positions) {
+    Vec4f p4{p.x, p.y, p.z, 1.f};
+    Vec4f t = make_translation(Vec3f{-50.f,-0.9f,20.f}) * p4;
+    t /= t.w;
+
+    Vec3f pTransformed{t.x, t.y, t.z};
+    // Rest of your code...
+    p = pTransformed;
+  }
+
+  vao = create_vao(launchhpad);
+  vaos.push_back(vao);
+  vertexCounts.push_back(launchhpad.positions.size());
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -218,9 +248,9 @@ int main() try {
     float dt = std::chrono::duration_cast<Secondsf>(now - last).count();
     last = now;
 
-    angle += dt * kPi_ * 0.3f;
-    if (angle >= 2.f * kPi_)
-      angle -= 2.f * kPi_;
+    // angle += dt * kPi_ * 0.3f;
+    // if (angle >= 2.f * kPi_)
+    //   angle -= 2.f * kPi_;
 
     // Update camera state
     // Assuming state.camControl.theta and state.camControl.phi are the camera
@@ -228,18 +258,18 @@ int main() try {
 
     if (state.camControl.moveForward) {
       state.camControl.x -=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi);
+          kMovementPerSecond_ * dt * sin(state.camControl.phi) * cos(state.camControl.theta);
       state.camControl.y +=
           kMovementPerSecond_ * dt * sin(state.camControl.theta);
       state.camControl.z -=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi);
+          kMovementPerSecond_ * dt * cos(state.camControl.phi) * cos(state.camControl.theta);
     } else if (state.camControl.moveBackward) {
       state.camControl.x +=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi);
+          kMovementPerSecond_ * dt * sin(state.camControl.phi)  * cos(state.camControl.theta);
       state.camControl.y -=
           kMovementPerSecond_ * dt * sin(state.camControl.theta);
       state.camControl.z +=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi);
+          kMovementPerSecond_ * dt * cos(state.camControl.phi) * cos(state.camControl.theta);
     }
 
     if (state.camControl.moveLeft) {
@@ -274,7 +304,7 @@ int main() try {
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
     Mat33f normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
-    Vec3f lightDir = normalize(Vec3f{1.f, 0.f, 0.5f});
+    Vec3f lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
     // Draw scene
     OGL_CHECKPOINT_DEBUG();
 
@@ -291,11 +321,12 @@ int main() try {
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
 
-    for (auto &vao : vaos) {
-      glBindVertexArray(vao);
+    for (int i = 0; i < vaos.size(); i++) {
+      glBindVertexArray(vaos[i]);
       // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-      glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+      glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
+
     // glBindVertexArray(vao);
     // // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     // glDrawArrays(GL_TRIANGLES, 0, vertexCount);
