@@ -249,7 +249,7 @@ int main() try {
     //   state.camControl.radius = 0.1f;
 
     Mat44f model2world = make_rotation_y(0);
-    Mat44f world2camera = make_translation({0.f, 0.f, -10.f});
+    Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
 
     Mat44f projection = make_perspective_projection(
         60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
@@ -261,7 +261,7 @@ int main() try {
 
     Mat44f T = make_translation(
         {state.camControl.x, state.camControl.y, -state.camControl.z});
-    world2camera = world2camera * (Ry * Rx * T);
+    world2camera = world2camera * (Rx * Ry * T);
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
     Mat33f normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
@@ -387,6 +387,7 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       else if (state->camControl.theta < -kPi_ / 2.f)
         state->camControl.theta = -kPi_ / 2.f;
     }
+    printf("phi: %f, theta: %f\n", state->camControl.phi, state->camControl.theta);
 
     state->camControl.lastX = float(aX);
     state->camControl.lastY = float(aY);
