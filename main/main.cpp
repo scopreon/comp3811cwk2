@@ -25,6 +25,7 @@
 #include "../vmlib/vec4.hpp"
 
 #include "defaults.hpp"
+#include "texture.hpp"
 
 namespace {
 constexpr char const *kWindowTitle = "COMP3811 - CW2";
@@ -290,6 +291,10 @@ int main() try {
 
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
+
+    GLuint tex = load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
 
     for (auto &vao : vaos) {
       glBindVertexArray(vao);
