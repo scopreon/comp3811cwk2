@@ -181,9 +181,6 @@ int main() try {
       "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
       "comp3811cwk2/assets/L4343A-4k.jpeg");
 
-  //   GLuint text2 =
-  //       load_texture_2d("/uolstore/home/student_lnxhome01/sc21sc/Documents/"
-  //                       "Year_3/coursework2/comp3811cwk2/assets/landingpad.mtl");
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
   vaos.push_back(vao);
@@ -197,14 +194,13 @@ int main() try {
     t /= t.w;
 
     Vec3f pTransformed{t.x, t.y, t.z};
-    // Rest of your code...
     p = pTransformed;
   }
 
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
-  //   textures.push_back(text2);
+  textures.push_back(0);
 
   launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
@@ -213,14 +209,13 @@ int main() try {
     t /= t.w;
 
     Vec3f pTransformed{t.x, t.y, t.z};
-    // Rest of your code...
     p = pTransformed;
   }
 
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
-  //   textures.push_back(text2);
+  textures.push_back(0);
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -336,26 +331,15 @@ int main() try {
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
 
-    // GLuint tex =
-    // load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
-    glBindVertexArray(vaos[0]);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-    glDrawArrays(GL_TRIANGLES, 0, vertexCounts[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
-    for (int i = 1; i < vaos.size(); i++) {
+    for (int i = 0; i < vaos.size(); i++) {
       glBindVertexArray(vaos[i]);
-      //   glActiveTexture(GL_TEXTURE0);
-      //   glBindTexture(GL_TEXTURE_2D, textures[0]);
-      // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, textures[i]);
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
 
-    // glBindVertexArray(vao);
-    // // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-    // glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
