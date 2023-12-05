@@ -174,19 +174,26 @@ int main() try {
 
   std::vector<GLuint> vaos;
   std::vector<std::size_t> vertexCounts;
+  std::vector<GLuint> textures;
   std::size_t vertexCount = 0;
+
   GLuint tex = load_texture_2d(
       "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
       "comp3811cwk2/assets/L4343A-4k.jpeg");
+
+  //   GLuint text2 =
+  //       load_texture_2d("/uolstore/home/student_lnxhome01/sc21sc/Documents/"
+  //                       "Year_3/coursework2/comp3811cwk2/assets/landingpad.mtl");
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
   vaos.push_back(vao);
   vertexCounts.push_back(map.positions.size());
+  textures.push_back(tex);
 
   auto launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
-    Vec4f t = make_translation(Vec3f{-10.f,-0.9f,15.f}) * p4;
+    Vec4f t = make_translation(Vec3f{-10.f, -0.97f, 15.f}) * p4;
     t /= t.w;
 
     Vec3f pTransformed{t.x, t.y, t.z};
@@ -197,11 +204,12 @@ int main() try {
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
+  //   textures.push_back(text2);
 
   launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
-    Vec4f t = make_translation(Vec3f{-50.f,-0.9f,20.f}) * p4;
+    Vec4f t = make_translation(Vec3f{-50.f, -0.97f, 20.f}) * p4;
     t /= t.w;
 
     Vec3f pTransformed{t.x, t.y, t.z};
@@ -209,10 +217,10 @@ int main() try {
     p = pTransformed;
   }
 
-  vao = create_vao(launchhpad); 
+  vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
-
+  //   textures.push_back(text2);
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -260,19 +268,23 @@ int main() try {
     // direction angles
 
     if (state.camControl.moveForward) {
-      state.camControl.x -=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi) * cos(state.camControl.theta);
+      state.camControl.x -= kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi) *
+                            cos(state.camControl.theta);
       state.camControl.y +=
           kMovementPerSecond_ * dt * sin(state.camControl.theta);
-      state.camControl.z -=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi) * cos(state.camControl.theta);
+      state.camControl.z -= kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi) *
+                            cos(state.camControl.theta);
     } else if (state.camControl.moveBackward) {
-      state.camControl.x +=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi)  * cos(state.camControl.theta);
+      state.camControl.x += kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi) *
+                            cos(state.camControl.theta);
       state.camControl.y -=
           kMovementPerSecond_ * dt * sin(state.camControl.theta);
-      state.camControl.z +=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi) * cos(state.camControl.theta);
+      state.camControl.z += kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi) *
+                            cos(state.camControl.theta);
     }
 
     if (state.camControl.moveLeft) {
@@ -326,13 +338,17 @@ int main() try {
 
     // GLuint tex =
     // load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
-
+    glBindVertexArray(vaos[0]);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex);
-
-    for (int i = 0; i < vaos.size(); i++) {
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    glDrawArrays(GL_TRIANGLES, 0, vertexCounts[0]);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    for (int i = 1; i < vaos.size(); i++) {
       glBindVertexArray(vaos[i]);
-
+      //   glActiveTexture(GL_TEXTURE0);
+      //   glBindTexture(GL_TEXTURE_2D, textures[0]);
       // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
@@ -340,6 +356,7 @@ int main() try {
     // glBindVertexArray(vao);
     // // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     // glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
 
