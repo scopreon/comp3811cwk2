@@ -206,7 +206,7 @@ int main() try {
     p = pTransformed;
   }
 
-  vao = create_vao(launchhpad);
+  vao = create_vao(launchhpad); 
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
 
