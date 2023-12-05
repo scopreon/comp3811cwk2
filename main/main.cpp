@@ -4,8 +4,8 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-#include "cylinder.hpp"
 #include "loadobj.hpp"
+#include "shapes.hpp"
 
 #include "../vmlib/mat33.hpp"
 #include "../vmlib/mat44.hpp"
@@ -147,7 +147,7 @@ int main() try {
   // TODO: global GL setup goes here
 
   glEnable(GL_FRAMEBUFFER_SRGB);
-  // glEnable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
 
   glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
@@ -216,6 +216,18 @@ int main() try {
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
+
+  auto shape = make_cylinder();
+
+//   for (const auto &p : shape.normals) {
+//     printf("%f, %f, %f\n", p.x, p.y, p.z);
+//   }
+
+  vao = create_vao(shape);
+  vaos.push_back(vao);
+  vertexCounts.push_back(shape.positions.size());
+  textures.push_back(0);
+
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -333,6 +345,7 @@ int main() try {
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
+
     for (int i = 0; i < vaos.size(); i++) {
       glBindVertexArray(vaos[i]);
       glActiveTexture(GL_TEXTURE0);

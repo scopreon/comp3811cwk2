@@ -109,7 +109,18 @@ Vec4f operator*(Mat44f const& aLeft, Vec4f const& aRight) noexcept
     };
 }
 
-
+inline
+Mat44f make_scaling( float aSX, float aSY, float aSZ ) noexcept
+{
+	//TODO: your implementation goes here
+	//TODO: remove the following when you start your implementation
+    return Mat44f{
+        aSX, 0.0f, 0.0f, 0.0f,
+        0.0f, aSY, 0.0f, 0.0f,
+        0.0f, 0.0f, aSZ, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}
 // Functions:
 
 inline Mat44f make_rotation_x(float aAngle) noexcept
