@@ -27,6 +27,7 @@
 #include "../vmlib/vec4.hpp"
 
 #include "defaults.hpp"
+#include "texture.hpp"
 
 namespace {
 constexpr char const *kWindowTitle = "COMP3811 - CW2";
@@ -174,7 +175,9 @@ int main() try {
   std::vector<GLuint> vaos;
   std::vector<std::size_t> vertexCounts;
   std::size_t vertexCount = 0;
-
+  GLuint tex = load_texture_2d(
+      "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
+      "comp3811cwk2/assets/L4343A-4k.jpeg");
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
   vaos.push_back(vao);
@@ -321,8 +324,15 @@ int main() try {
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
 
+    // GLuint tex =
+    // load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
     for (int i = 0; i < vaos.size(); i++) {
       glBindVertexArray(vaos[i]);
+
       // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
@@ -428,8 +438,6 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       else if (state->camControl.theta < -kPi_ / 2.f)
         state->camControl.theta = -kPi_ / 2.f;
     }
-    printf("phi: %f, theta: %f\n", state->camControl.phi,
-           state->camControl.theta);
 
     state->camControl.lastX = float(aX);
     state->camControl.lastY = float(aY);
