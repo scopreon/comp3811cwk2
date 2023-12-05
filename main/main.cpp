@@ -173,7 +173,9 @@ int main() try {
   std::vector<GLuint> vaos;
 
   std::size_t vertexCount = 0;
-
+  GLuint tex = load_texture_2d(
+      "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
+      "comp3811cwk2/assets/L4343A-4k.jpeg");
   auto map = load_wavefront_obj("assets/parlahti.obj");
   //    load_wavefront_obj("assets/Armadillo.obj");
 
@@ -292,7 +294,9 @@ int main() try {
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
 
-    GLuint tex = load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
+    // GLuint tex =
+    // load_texture_2d("/uolstore/home/student_lnxhome01/sc21j2lg/Documents/comp3811cwk2/assets/L4343A-4k.jpeg");
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -402,8 +406,6 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       else if (state->camControl.theta < -kPi_ / 2.f)
         state->camControl.theta = -kPi_ / 2.f;
     }
-    printf("phi: %f, theta: %f\n", state->camControl.phi,
-           state->camControl.theta);
 
     state->camControl.lastX = float(aX);
     state->camControl.lastY = float(aY);
