@@ -51,6 +51,7 @@ struct State_ {
     float lastX, lastY;
 
     float x, y, z;
+    float speed = 1.f;
   } camControl;
 };
 
@@ -148,7 +149,7 @@ int main() try {
   // TODO: global GL setup goes here
 
   glEnable(GL_FRAMEBUFFER_SRGB);
-//   glEnable(GL_CULL_FACE);
+  //   glEnable(GL_CULL_FACE);
 
   glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
@@ -218,11 +219,13 @@ int main() try {
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
 
-  auto spaceship = make_spaceship(10, kIdentity44f * make_translation({-10.f, -0.9f, 15.f}) * make_scaling(0.1f, 0.1f, 0.1f));
+  auto spaceship =
+      make_spaceship(10, kIdentity44f * make_translation({-10.f, -0.9f, 15.f}) *
+                             make_scaling(0.1f, 0.1f, 0.1f));
 
-//   for (const auto &p : shape.normals) {
-//     printf("%f, %f, %f\n", p.x, p.y, p.z);
-//   }
+  //   for (const auto &p : shape.normals) {
+  //     printf("%f, %f, %f\n", p.x, p.y, p.z);
+  //   }
 
   vao = create_vao(spaceship);
   vaos.push_back(vao);
@@ -274,37 +277,36 @@ int main() try {
     // Update camera state
     // Assuming state.camControl.theta and state.camControl.phi are the camera
     // direction angles
-
     if (state.camControl.moveForward) {
-      state.camControl.x -= kMovementPerSecond_ * dt *
+      state.camControl.x -=  state.camControl.speed * kMovementPerSecond_ * dt *
                             sin(state.camControl.phi) *
                             cos(state.camControl.theta);
       state.camControl.y +=
-          kMovementPerSecond_ * dt * sin(state.camControl.theta);
-      state.camControl.z -= kMovementPerSecond_ * dt *
+          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
                             cos(state.camControl.phi) *
                             cos(state.camControl.theta);
     } else if (state.camControl.moveBackward) {
-      state.camControl.x += kMovementPerSecond_ * dt *
+      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
                             sin(state.camControl.phi) *
                             cos(state.camControl.theta);
       state.camControl.y -=
-          kMovementPerSecond_ * dt * sin(state.camControl.theta);
-      state.camControl.z += kMovementPerSecond_ * dt *
+          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
                             cos(state.camControl.phi) *
                             cos(state.camControl.theta);
     }
 
     if (state.camControl.moveLeft) {
       state.camControl.x +=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
+          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
       state.camControl.z +=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+          state.camControl.speed * kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
     } else if (state.camControl.moveRight) {
       state.camControl.x -=
-          kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
+          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
       state.camControl.z -=
-          kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+          state.camControl.speed * kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
     }
 
     // if (state.camControl.radius <= 0.1f)
@@ -434,6 +436,12 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
           state->camControl.moveRight = true;
         else if (GLFW_RELEASE == aAction)
           state->camControl.moveRight = false;
+      }
+      if (GLFW_KEY_LEFT_SHIFT == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->camControl.speed = 1.5f;
+        else if (GLFW_RELEASE == aAction)
+          state->camControl.speed = 1.f;
       }
     }
   }
