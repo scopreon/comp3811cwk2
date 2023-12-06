@@ -13,7 +13,7 @@
 
 SimpleMeshData make_cylinder(
 	bool aCapped = true,
-	std::size_t aSubdivs = 4,
+	std::size_t aSubdivs = 16,
 	Vec3f aColor = { 0.f, 0.5f, 1.f },
 	Mat44f aPreTransform = kIdentity44f
 );
