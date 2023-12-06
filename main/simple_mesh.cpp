@@ -9,7 +9,6 @@ SimpleMeshData concatenate( SimpleMeshData aM, SimpleMeshData const& aN )
 	return aM;
 }
 
-
 GLuint create_vao( SimpleMeshData const& aMeshData )
 {
     GLuint positionVBO = 0;
