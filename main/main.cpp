@@ -180,8 +180,8 @@ int main() try {
   std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d(
-      "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
-      "comp3811cwk2/assets/L4343A-4k.jpeg");
+      "/home/csunix/sc21l2s/Documents/Year 3/Graphics/CW2/comp3811cwk2/assets/L4343A-4k.jpeg");
+
 
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
@@ -336,11 +336,19 @@ int main() try {
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(prog.programId());
 
+    // Pass projection matrix to the shader
     glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
+
+    // Pass normal matrix to the shader
     glUniformMatrix3fv(3, 1, GL_TRUE, normalMatrix.v);
 
+    // Set light direction
     glUniform3fv(5, 1, &lightDir.x);
+
+    // Set diffuse lighting
     glUniform3f(6, 0.9f, 0.9f, 0.6f);
+
+    // Set ambient lighting
     glUniform3f(7, 0.05f, 0.05f, 0.05f);
 
     static float const baseColor[] = {0.2f, 1.f, 1.f};
