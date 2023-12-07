@@ -245,7 +245,7 @@ int main() try {
   m_Particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
   m_Particle.SizeBegin = 1.f, m_Particle.SizeVariation = 0.5f, m_Particle.SizeEnd = 0.0f;
   m_Particle.LifeTime = 1.0f;
-  m_Particle.Velocity = { 0.f, 0.f, 0.f };
+  m_Particle.Velocity = { 1.f, 0.f, 0.f };
   m_Particle.VelocityVariation = { 0.f, 0.f, 0.f };
   m_Particle.Position = { 1.0f, 1.0f, 1.0f };
   m_Particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
@@ -353,26 +353,23 @@ int main() try {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    printf("X: %f Y: %f Z: %f\n", state.camControl.x, state.camControl.y, state.camControl.z);
-
+    
+    // Particle System
     glEnable(GL_BLEND);
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-
-  std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-  std::chrono::duration<float> deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - prevTime);
-  prevTime = currentTime;
-  float deltaTimeInSeconds = deltaTime.count();
-  
-  // Call update function and pass deltaTimeInSeconds
-  m_ParticleSystem.OnUpdate(deltaTimeInSeconds);
-  m_ParticleSystem.OnRender(projCameraWorld);
-  m_ParticleSystem.Emit(m_Particle);
-  
+    std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+    std::chrono::duration<float> deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - prevTime);
+    prevTime = currentTime;
+    float deltaTimeInSeconds = deltaTime.count();
     
 
+    m_ParticleSystem.OnUpdate(deltaTimeInSeconds);
+    m_ParticleSystem.OnRender(projCameraWorld);
+    m_ParticleSystem.Emit(m_Particle);
+
     glDisable(GL_BLEND);
+    // Particle System end
 
     glUseProgram(prog.programId());
 
