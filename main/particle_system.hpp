@@ -9,11 +9,11 @@
 
 #include <vector>
 #include <memory>
-#include <cmath>
+#include <random>
 
 struct ParticleProps
 {
-	Vec3f Position;
+	Vec3f Position, PositionVariation;
 	Vec3f Velocity, VelocityVariation;
 	Vec4f ColorBegin, ColorEnd;
 	float SizeBegin, SizeEnd, SizeVariation;

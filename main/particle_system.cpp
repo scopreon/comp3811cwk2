@@ -1,7 +1,5 @@
 #include "particle_system.hpp"
 
-#include <random>
-
 float RandomFloat01() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -9,6 +7,7 @@ float RandomFloat01() {
     return dis(gen);
 }
 
+// Linear interpolation function betwen two floats
 float lerp(float a, float b, float f)
 {
     return a * (1.0 - f) + (b * f);
@@ -131,9 +130,6 @@ float vertices[] = {
 		float life = particle.LifeRemaining / particle.LifeTime;
 		float size = lerp(particle.SizeEnd, particle.SizeBegin, life);
         Vec4f color = lerp(particle.ColorEnd, particle.ColorBegin, life);
-        
-
-        printf("size: %f\n", size);
 		
 		// Render
         Mat44f transform = make_translation(Vec3f{particle.Position.x, particle.Position.y, particle.Position.z})
@@ -142,15 +138,11 @@ float vertices[] = {
             * make_rotation_z(particle.Rotation)
             * make_scaling(size, size, size);
 
-        // Mat44f transform = make_scaling(size, size, size);
-
-
 		glUniformMatrix4fv(1, 1, GL_TRUE, transform.v);
 		glUniform4f(2,color.x, color.y, color.z, color.w);
 		glBindVertexArray(m_CubeVA);
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 	}
-    printf("yooo\n");
 }
 
 void ParticleSystem::Emit(const ParticleProps& particleProps)
@@ -158,22 +150,27 @@ void ParticleSystem::Emit(const ParticleProps& particleProps)
 	Particle& particle = m_ParticlePool[m_PoolIndex];
 	particle.Active = true;
 	particle.Position = particleProps.Position;
-    // CHANGE PI
-	// particle.Rotation = Random::Float() * 2.0f * 3.14;
+    particle.Position.x += particleProps.PositionVariation.x * (RandomFloat01() - 0.5f);
+    particle.Position.y += particleProps.PositionVariation.y * (RandomFloat01() - 0.5f);
+    particle.Position.z += particleProps.PositionVariation.z * (RandomFloat01() - 0.5f);
+
+    // Rotation
+	particle.Rotation = RandomFloat01() * 2.0f * 3.14;
 
 	// Velocity
 	particle.Velocity = particleProps.Velocity;
     particle.Velocity.x += particleProps.VelocityVariation.x * (RandomFloat01() - 0.5f);
     particle.Velocity.y += particleProps.VelocityVariation.y * (RandomFloat01() - 0.5f);
+    particle.Velocity.z += particleProps.VelocityVariation.z * (RandomFloat01() - 0.5f);
 
 
 	// Color
 	particle.ColorBegin = particleProps.ColorBegin;
 	particle.ColorEnd = particleProps.ColorEnd;
-
+    
 	particle.LifeTime = particleProps.LifeTime;
 	particle.LifeRemaining = particleProps.LifeTime;
-	particle.SizeBegin = particleProps.SizeBegin + particleProps.SizeVariation * (RandomFloat01() - 0.5f);
+	particle.SizeBegin = particleProps.SizeBegin - particleProps.SizeVariation + (particleProps.SizeVariation * RandomFloat01());
 	particle.SizeEnd = particleProps.SizeEnd;
 
 	m_PoolIndex = --m_PoolIndex % m_ParticlePool.size();

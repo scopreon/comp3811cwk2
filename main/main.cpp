@@ -243,11 +243,12 @@ int main() try {
   // Initialise
   m_Particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
   m_Particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
-  m_Particle.SizeBegin = 0.7f, m_Particle.SizeVariation = 0.3f, m_Particle.SizeEnd = 0.0f;
+  m_Particle.SizeBegin = 1.f, m_Particle.SizeVariation = 0.5f, m_Particle.SizeEnd = 0.0f;
   m_Particle.LifeTime = 1.0f;
   m_Particle.Velocity = { 0.f, 0.f, 0.f };
   m_Particle.VelocityVariation = { 0.f, 0.f, 0.f };
   m_Particle.Position = { 1.0f, 1.0f, 1.0f };
+  m_Particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
 
   std::chrono::steady_clock::time_point prevTime = std::chrono::steady_clock::now();
 
@@ -367,10 +368,7 @@ int main() try {
   // Call update function and pass deltaTimeInSeconds
   m_ParticleSystem.OnUpdate(deltaTimeInSeconds);
   m_ParticleSystem.OnRender(projCameraWorld);
-
-  for (unsigned int i = 0; i < 10; i++) {
-    m_ParticleSystem.Emit(m_Particle);
-  }
+  m_ParticleSystem.Emit(m_Particle);
   
     
 
