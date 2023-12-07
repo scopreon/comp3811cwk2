@@ -30,6 +30,8 @@
 #include "spaceship.hpp"
 #include "texture.hpp"
 
+#include "particle_system.hpp"
+
 namespace {
 constexpr char const *kWindowTitle = "COMP3811 - CW2";
 
@@ -180,8 +182,7 @@ int main() try {
   std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d(
-      "/uolstore/home/student_lnxhome01/sc21sc/Documents/Year_3/coursework2/"
-      "comp3811cwk2/assets/L4343A-4k.jpeg");
+      "assets/L4343A-4k.jpeg");
 
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
@@ -234,6 +235,22 @@ int main() try {
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  // Particle
+  ParticleProps m_Particle;
+  ParticleSystem m_ParticleSystem;
+
+  // Initialise
+  m_Particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
+  m_Particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
+  m_Particle.SizeBegin = 0.7f, m_Particle.SizeVariation = 0.3f, m_Particle.SizeEnd = 0.0f;
+  m_Particle.LifeTime = 1.0f;
+  m_Particle.Velocity = { 0.f, 0.f, 0.f };
+  m_Particle.VelocityVariation = { 0.f, 0.f, 0.f };
+  m_Particle.Position = { 1.0f, 1.0f, 1.0f };
+
+  std::chrono::steady_clock::time_point prevTime = std::chrono::steady_clock::now();
+
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
@@ -334,6 +351,31 @@ int main() try {
     OGL_CHECKPOINT_DEBUG();
 
     glClear(GL_COLOR_BUFFER_BIT);
+
+    printf("X: %f Y: %f Z: %f\n", state.camControl.x, state.camControl.y, state.camControl.z);
+
+    glEnable(GL_BLEND);
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+
+  std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+  std::chrono::duration<float> deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - prevTime);
+  prevTime = currentTime;
+  float deltaTimeInSeconds = deltaTime.count();
+  
+  // Call update function and pass deltaTimeInSeconds
+  m_ParticleSystem.OnUpdate(deltaTimeInSeconds);
+  m_ParticleSystem.OnRender(projCameraWorld);
+
+  for (unsigned int i = 0; i < 10; i++) {
+    m_ParticleSystem.Emit(m_Particle);
+  }
+  
+    
+
+    glDisable(GL_BLEND);
+
     glUseProgram(prog.programId());
 
     glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
