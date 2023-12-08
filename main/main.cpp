@@ -351,9 +351,14 @@ int main() try {
     // Set ambient lighting
     glUniform3f(7, 0.05f, 0.05f, 0.05f);
 
+    // Pass current camera position to the shader
+    glUniform3f(8, state.camControl.x, state.camControl.y, state.camControl.z);
+
+    // Set light direction
+    glUniform3f(9, lightDir.x, lightDir.y, lightDir.z);
+    
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
-
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
