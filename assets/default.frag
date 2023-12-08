@@ -39,10 +39,26 @@ vec3 calculateDirect(vec3 normal) {
     return direct;
 }
 
+vec3 calculatePoint(int index, vec3 normal) {
+
+    vec3 pLightDir = normalize(pointLights[index] - v2fviewPos);
+    float distance = length(pointLights[index] - v2fviewPos);
+
+    float nDotL = max(0.0, dot(normal, pLightDir));
+
+    vec3 diffuseColor = nDotL * pointColor[index] / (attenuation[index] * distance);
+
+    vec3 viewDir = normalize(uViewDir);
+    vec3 halfwayDir = normalize(uLightDir + uViewDir);
+    float specLight = pow(max(dot(normal, halfwayDir), 0.0f), 2);
+    vec3 specColor = specLight * pointColor[index] / (attenuation[index] * distance);
+
+    return diffuseColor + specColor;
+}
+
 
 void main()
 {
-    // Diffuse  + Ambient Contribution
 
     // Normal Vector
     vec3 normal = normalize(v2fNormal);
@@ -51,11 +67,22 @@ void main()
     
     vec3 dirLight = calculateDirect(normal);
 
+    vec3 pointLightColor = vec3(0.0);
+
+    for (int i = 0; i < 3; i++) {
+        pointLightColor += calculatePoint(i, normal);
+    }
+
+    vec3 finalColor = ambient + dirLight + pointLightColor;
+
     // Check if a texture is bound
     vec3 textureColor = vec3(1.0); // Default to white if no texture
     if (texture(uTexture, v2fTexCoord).r > 0.0) {
         textureColor = texture(uTexture, v2fTexCoord).rgb;
     }
 
+    // oColor = finalColor * v2fColor * textureColor;
+
     oColor = (ambient + dirLight) * v2fColor * textureColor;
+
 }

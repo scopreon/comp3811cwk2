@@ -354,6 +354,7 @@ int main() try {
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
 
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 
