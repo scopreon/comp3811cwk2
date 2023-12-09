@@ -236,17 +236,16 @@ int main() try {
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // Particle
+  // Initialise particle and particleSystem
   ParticleProps m_Particle;
   ParticleSystem m_ParticleSystem;
 
-  // Initialise
   m_Particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
   m_Particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
   m_Particle.SizeBegin = 1.f, m_Particle.SizeVariation = 0.5f, m_Particle.SizeEnd = 0.0f;
   m_Particle.LifeTime = 1.0f;
   m_Particle.Velocity = { 1.f, 0.f, 0.f };
-  m_Particle.VelocityVariation = { 0.f, 0.f, 0.f };
+  m_Particle.VelocityVariation = { 1.f, 0.f, 0.f };
   m_Particle.Position = { 1.0f, 1.0f, 1.0f };
   m_Particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
 
@@ -364,9 +363,9 @@ int main() try {
     float deltaTimeInSeconds = deltaTime.count();
     
 
-    m_ParticleSystem.OnUpdate(deltaTimeInSeconds);
-    m_ParticleSystem.OnRender(projCameraWorld);
-    m_ParticleSystem.Emit(m_Particle);
+    m_ParticleSystem.Update(deltaTimeInSeconds);
+    m_ParticleSystem.Spawn(m_Particle);
+    m_ParticleSystem.Render(projCameraWorld);
 
     glDisable(GL_BLEND);
     // Particle System end

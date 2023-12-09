@@ -1,5 +1,6 @@
 #include "particle_system.hpp"
 
+// Generate random float between 0 and 1
 float RandomFloat01() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -23,12 +24,14 @@ Vec4f lerp(const Vec4f& a, const Vec4f& b, float t) {
     return result;
 }
 
+// Constructor sets ParticlePool vector to size 1000
 ParticleSystem::ParticleSystem()
 {
 	m_ParticlePool.resize(1000);
 }
 
-void ParticleSystem::OnUpdate(float ts)
+// Update particles function
+void ParticleSystem::Update(float ts)
 {
 	for (auto& particle : m_ParticlePool)
 	{
@@ -47,76 +50,77 @@ void ParticleSystem::OnUpdate(float ts)
 	}
 }
 
-void ParticleSystem::OnRender(Mat44f projCameraWorld)
+// Render particles
+void ParticleSystem::Render(Mat44f projCameraWorld)
 {
-    ShaderProgram prog({{GL_VERTEX_SHADER, "assets/shader.glsl.vert"},
-                      {GL_FRAGMENT_SHADER, "assets/shader.glsl.frag"}});
+    ShaderProgram prog({{GL_VERTEX_SHADER, "assets/particle.vert"},
+                        {GL_FRAGMENT_SHADER, "assets/particle.frag"}});
 
 
-if (!m_CubeVA)
-{
-float vertices[] = {
-    // Front face
-    -0.05f, -0.05f, 0.05f,
-     0.05f, -0.05f, 0.05f,
-     0.05f,  0.05f, 0.05f,
-    -0.05f,  0.05f, 0.05f,
+    if (!m_CubeVA)
+    {
+        float vertices[] = {
+            // Front face
+            -0.05f, -0.05f, 0.05f,
+            0.05f, -0.05f, 0.05f,
+            0.05f,  0.05f, 0.05f,
+            -0.05f,  0.05f, 0.05f,
 
-    // Back face
-    -0.05f, -0.05f, -0.05f,
-     0.05f, -0.05f, -0.05f,
-     0.05f,  0.05f, -0.05f,
-    -0.05f,  0.05f, -0.05f,
+            // Back face
+            -0.05f, -0.05f, -0.05f,
+            0.05f, -0.05f, -0.05f,
+            0.05f,  0.05f, -0.05f,
+            -0.05f,  0.05f, -0.05f,
 
-    // Left face
-    -0.05f, -0.05f, -0.05f,
-    -0.05f, -0.05f,  0.05f,
-    -0.05f,  0.05f,  0.05f,
-    -0.05f,  0.05f, -0.05f,
+            // Left face
+            -0.05f, -0.05f, -0.05f,
+            -0.05f, -0.05f,  0.05f,
+            -0.05f,  0.05f,  0.05f,
+            -0.05f,  0.05f, -0.05f,
 
-    // Right face
-     0.05f, -0.05f, -0.05f,
-     0.05f, -0.05f,  0.05f,
-     0.05f,  0.05f,  0.05f,
-     0.05f,  0.05f, -0.05f,
+            // Right face
+            0.05f, -0.05f, -0.05f,
+            0.05f, -0.05f,  0.05f,
+            0.05f,  0.05f,  0.05f,
+            0.05f,  0.05f, -0.05f,
 
-    // Top face
-    -0.05f,  0.05f,  0.05f,
-     0.05f,  0.05f,  0.05f,
-     0.05f,  0.05f, -0.05f,
-    -0.05f,  0.05f, -0.05f,
+            // Top face
+            -0.05f,  0.05f,  0.05f,
+            0.05f,  0.05f,  0.05f,
+            0.05f,  0.05f, -0.05f,
+            -0.05f,  0.05f, -0.05f,
 
-    // Bottom face
-    -0.05f, -0.05f,  0.05f,
-     0.05f, -0.05f,  0.05f,
-     0.05f, -0.05f, -0.05f,
-    -0.05f, -0.05f, -0.05f
-};
+            // Bottom face
+            -0.05f, -0.05f,  0.05f,
+            0.05f, -0.05f,  0.05f,
+            0.05f, -0.05f, -0.05f,
+            -0.05f, -0.05f, -0.05f
+        };
 
-    glGenVertexArrays(1, &m_CubeVA);
-    glBindVertexArray(m_CubeVA);
+        glGenVertexArrays(1, &m_CubeVA);
+        glBindVertexArray(m_CubeVA);
 
-    GLuint cubeVB, cubeIB;
-    glGenBuffers(1, &cubeVB);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVB);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        GLuint cubeVB, cubeIB;
+        glGenBuffers(1, &cubeVB);
+        glBindBuffer(GL_ARRAY_BUFFER, cubeVB);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
-    uint32_t indices[] = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        8, 9, 10, 10, 11, 8,
-        12, 13, 14, 14, 15, 12,
-        16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20
-    };
+        uint32_t indices[] = {
+            0, 1, 2, 2, 3, 0,
+            4, 5, 6, 6, 7, 4,
+            8, 9, 10, 10, 11, 8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 21, 22, 22, 23, 20
+        };
 
-    glGenBuffers(1, &cubeIB);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeIB);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-}
+        glGenBuffers(1, &cubeIB);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeIB);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    }
 
 	glUseProgram(prog.programId());
 	glUniformMatrix4fv(0, 1, GL_TRUE, projCameraWorld.v);
@@ -145,7 +149,8 @@ float vertices[] = {
 	}
 }
 
-void ParticleSystem::Emit(const ParticleProps& particleProps)
+// Spawn particles
+void ParticleSystem::Spawn(const ParticleProps& particleProps)
 {
 	Particle& particle = m_ParticlePool[m_PoolIndex];
 	particle.Active = true;

@@ -25,10 +25,10 @@ class ParticleSystem
 public:
     ParticleSystem();
 
-    void OnUpdate(float ts);
-    void OnRender(Mat44f projCameraWorld);
+    void Update(float ts);
+    void Render(Mat44f projCameraWorld);
 
-    void Emit(const ParticleProps& particleProps);
+    void Spawn(const ParticleProps& particleProps);
 private:
 	struct Particle
 	{
@@ -47,5 +47,4 @@ private:
 	uint32_t m_PoolIndex = 999;
 
 	GLuint m_CubeVA = 0;
-	GLint m_ParticleShaderViewProj, m_ParticleShaderTransform, m_ParticleShaderColor;
 };
