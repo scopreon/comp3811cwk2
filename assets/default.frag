@@ -24,11 +24,19 @@ struct Material {
     float shininess;
 };
 
+struct Light {
+    vec3 position;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
 uniform Material material;
+uniform Light light;
 
 void main()
 {
-    vec3 ambient = v2fColor * material.ambient;
 
     // Normal Vector
     vec3 normal = normalize(v2fNormal);
@@ -44,15 +52,13 @@ void main()
 
     // Get Specular Component
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = v2fColor * (spec * material.specular);
 
     // Diffuse Reflection
     float nDotL = max(0.0, dot(normal, lightDir));
 
-    // Diffuse Final = Reflectance * Incoming Diffuse Light
-    vec3 diffuseColor = (nDotL * material.diffuse) * v2fColor;
-
-
+    vec3 ambient = light.ambient * material.ambient;
+    vec3 diffuse = light.diffuse * (nDotL * material.diffuse);
+    vec3 specular = light.specular * (spec * material.specular);
 
     // Check if a texture is bound
     vec3 textureColor = vec3(1.0); // Default to white if no texture
@@ -61,6 +67,6 @@ void main()
     }
 
     // Final Color
-    oColor = (diffuseColor + uSceneAmbient + specular) * v2fColor * textureColor;
+    oColor = (diffuse + ambient + specular) * v2fColor * textureColor;
 
 }

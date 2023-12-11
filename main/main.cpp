@@ -357,7 +357,15 @@ int main() try {
     // Set light direction
     glUniform3f(9, lightDir.x, lightDir.y, lightDir.z);
 
-    // prog.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(prog.programId(), "material.ambient"), 1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(prog.programId(), "material.diffuse"), 1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(prog.programId(), "material.specular"), 0.5f, 0.5f, 0.5f);
+    glUniform1f(glGetUniformLocation(prog.programId(), "material.shininess"), 32.f);
+
+    glUniform3f(glGetUniformLocation(prog.programId(), "light.ambient"), 0.2f, 0.2f, 0.2f);
+    glUniform3f(glGetUniformLocation(prog.programId(), "light.diffuse"), 0.5f, 0.5f, 0.5f);
+    glUniform3f(glGetUniformLocation(prog.programId(), "light.ambient"), 1.0f, 1.0f, 1.0f);
+    
     
     static float const baseColor[] = {0.2f, 1.f, 1.f};
     glUniform3fv(0, 1, baseColor);
