@@ -237,17 +237,17 @@ int main() try {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Initialise particle and particleSystem
-  ParticleProps m_Particle;
-  ParticleSystem m_ParticleSystem;
+  ParticleInit particle;
+  ParticleSystem particleSystem;
 
-  m_Particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
-  m_Particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
-  m_Particle.SizeBegin = 1.f, m_Particle.SizeVariation = 0.5f, m_Particle.SizeEnd = 0.0f;
-  m_Particle.LifeTime = 1.0f;
-  m_Particle.Velocity = { 1.f, 0.f, 0.f };
-  m_Particle.VelocityVariation = { 1.f, 0.f, 0.f };
-  m_Particle.Position = { 1.0f, 1.0f, 1.0f };
-  m_Particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
+  particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
+  particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
+  particle.SizeBegin = 1.f, particle.SizeVariation = 0.5f, particle.SizeEnd = 0.0f;
+  particle.Velocity = { 1.f, 0.f, 0.f };
+  particle.LifeTime = 1.0f;
+  particle.VelocityVariation = { 0.f, 0.f, 0.f };
+  particle.Position = { 1.0f, 1.0f, 1.0f };
+  particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
 
   std::chrono::steady_clock::time_point prevTime = std::chrono::steady_clock::now();
 
@@ -363,9 +363,9 @@ int main() try {
     float deltaTimeInSeconds = deltaTime.count();
     
 
-    m_ParticleSystem.Update(deltaTimeInSeconds);
-    m_ParticleSystem.Spawn(m_Particle);
-    m_ParticleSystem.Render(projCameraWorld);
+    particleSystem.Update(deltaTimeInSeconds);
+    particleSystem.Spawn(particle);
+    particleSystem.Render(projCameraWorld);
 
     glDisable(GL_BLEND);
     // Particle System end

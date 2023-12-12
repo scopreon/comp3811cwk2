@@ -11,7 +11,7 @@
 #include <memory>
 #include <random>
 
-struct ParticleProps
+struct ParticleInit
 {
 	Vec3f Position, PositionVariation;
 	Vec3f Velocity, VelocityVariation;
@@ -28,7 +28,7 @@ public:
     void Update(float ts);
     void Render(Mat44f projCameraWorld);
 
-    void Spawn(const ParticleProps& particleProps);
+    void Spawn(const ParticleInit& particleInit);
 private:
 	struct Particle
 	{

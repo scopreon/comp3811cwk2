@@ -150,33 +150,41 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
 }
 
 // Spawn particles
-void ParticleSystem::Spawn(const ParticleProps& particleProps)
-{
+void ParticleSystem::Spawn(const ParticleInit& particleInit)
+{   
+    // Get current index of particle pool
 	Particle& particle = m_ParticlePool[m_PoolIndex];
-	particle.Active = true;
-	particle.Position = particleProps.Position;
-    particle.Position.x += particleProps.PositionVariation.x * (RandomFloat01() - 0.5f);
-    particle.Position.y += particleProps.PositionVariation.y * (RandomFloat01() - 0.5f);
-    particle.Position.z += particleProps.PositionVariation.z * (RandomFloat01() - 0.5f);
 
-    // Rotation
+    // Set particle to active
+	particle.Active = true;
+
+    // Set position
+	particle.Position = particleInit.Position;
+    particle.Position.x += particleInit.PositionVariation.x * (RandomFloat01() - 0.5f);
+    particle.Position.y += particleInit.PositionVariation.y * (RandomFloat01() - 0.5f);
+    particle.Position.z += particleInit.PositionVariation.z * (RandomFloat01() - 0.5f);
+
+    // Set rotation
 	particle.Rotation = RandomFloat01() * 2.0f * 3.14;
 
 	// Velocity
-	particle.Velocity = particleProps.Velocity;
-    particle.Velocity.x += particleProps.VelocityVariation.x * (RandomFloat01() - 0.5f);
-    particle.Velocity.y += particleProps.VelocityVariation.y * (RandomFloat01() - 0.5f);
-    particle.Velocity.z += particleProps.VelocityVariation.z * (RandomFloat01() - 0.5f);
+	particle.Velocity = particleInit.Velocity;
+    particle.Velocity.x += particleInit.VelocityVariation.x * (RandomFloat01() - 0.5f);
+    particle.Velocity.y += particleInit.VelocityVariation.y * (RandomFloat01() - 0.5f);
+    particle.Velocity.z += particleInit.VelocityVariation.z * (RandomFloat01() - 0.5f);
 
-
-	// Color
-	particle.ColorBegin = particleProps.ColorBegin;
-	particle.ColorEnd = particleProps.ColorEnd;
+	// Set color
+	particle.ColorBegin = particleInit.ColorBegin;
+	particle.ColorEnd = particleInit.ColorEnd;
     
-	particle.LifeTime = particleProps.LifeTime;
-	particle.LifeRemaining = particleProps.LifeTime;
-	particle.SizeBegin = particleProps.SizeBegin - particleProps.SizeVariation + (particleProps.SizeVariation * RandomFloat01());
-	particle.SizeEnd = particleProps.SizeEnd;
+    // Set life time
+	particle.LifeTime = particleInit.LifeTime;
+	particle.LifeRemaining = particleInit.LifeTime;
 
+    // Set size
+	particle.SizeBegin = particleInit.SizeBegin - particleInit.SizeVariation + (particleInit.SizeVariation * RandomFloat01());
+	particle.SizeEnd = particleInit.SizeEnd;
+
+    // Update pool index
 	m_PoolIndex = --m_PoolIndex % m_ParticlePool.size();
 }
