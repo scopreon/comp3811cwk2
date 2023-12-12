@@ -67,12 +67,14 @@ OBJECTS :=
 
 GENERATED += $(OBJDIR)/loadobj.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/particle_system.o
 GENERATED += $(OBJDIR)/shapes.o
 GENERATED += $(OBJDIR)/simple_mesh.o
 GENERATED += $(OBJDIR)/spaceship.o
 GENERATED += $(OBJDIR)/texture.o
 OBJECTS += $(OBJDIR)/loadobj.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/particle_system.o
 OBJECTS += $(OBJDIR)/shapes.o
 OBJECTS += $(OBJDIR)/simple_mesh.o
 OBJECTS += $(OBJDIR)/spaceship.o
@@ -144,6 +146,9 @@ $(OBJDIR)/loadobj.o: loadobj.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: main.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/particle_system.o: particle_system.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/shapes.o: shapes.cpp
