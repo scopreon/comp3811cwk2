@@ -341,7 +341,7 @@ int main() try {
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
 
     Mat44f projection = make_perspective_projection(
-        60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
+        60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
                                    // mathematical constants)
         fbwidth / float(fbheight), 0.1f, 100.0f);
 
@@ -389,9 +389,9 @@ int main() try {
     }
     else if (state.cameraType == 1)
     {
-      state.trackingCameraDynamic.x =  spaceship.location.x + spaceship.offset.x;
-      state.trackingCameraDynamic.y =  spaceship.location.y + spaceship.offset.y + 0.25;
-      state.trackingCameraDynamic.z =  spaceship.location.z + spaceship.offset.z + 1.5;
+      state.trackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
+      state.trackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.25;
+      state.trackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 1.5;
 
       Rx = make_rotation_x(state.trackingCameraDynamic.theta);
       Ry = make_rotation_y(state.trackingCameraDynamic.phi);
@@ -402,9 +402,16 @@ int main() try {
     else if (state.cameraType == 2)
     {
 
-      state.trackingCameraStatic.x =  spaceship.location.x;
-      state.trackingCameraStatic.y =  spaceship.location.y + 0.25;
-      state.trackingCameraStatic.z =  spaceship.location.z + 1.5;
+      state.trackingCameraStatic.x = spaceship.location.x;
+      state.trackingCameraStatic.y = spaceship.location.y + 0.25;
+      state.trackingCameraStatic.z = spaceship.location.z + 1.5;
+
+
+      Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.trackingCameraStatic.x, state.trackingCameraStatic.y, state.trackingCameraStatic.z });
+      state.trackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+      state.trackingCameraStatic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+
 
       Rx = make_rotation_x(state.trackingCameraStatic.theta);
       Ry = make_rotation_y(state.trackingCameraStatic.phi);
@@ -519,7 +526,7 @@ int main() try {
       world2camera = make_translation({0.f, 0.f, 0.f});
 
       projection = make_perspective_projection(
-          60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
+          60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
                                     // mathematical constants)
           fbwidth / float(fbheight), 0.1f, 100.0f);
 
