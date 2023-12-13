@@ -563,7 +563,7 @@ void glfw_callback_error_(int aErrNum, char const *aErrDesc) {
   std::fprintf(stderr, "GLFW error: %s (%d)\n", aErrDesc, aErrNum);
 }
 
-void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
+void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mods) {
   if (GLFW_KEY_ESCAPE == aKey && GLFW_PRESS == aAction) {
     glfwSetWindowShouldClose(aWindow, GLFW_TRUE);
     return;
@@ -592,8 +592,9 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
     // Space toggles camera
     if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction) {
       state->camControl.cameraActive = !state->camControl.cameraActive;
+      state->secondCam.cameraActive = !state->secondCam.cameraActive;
 
-      if (state->camControl.cameraActive)
+      if (state->camControl.cameraActive || state->secondCam.cameraActive)
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
       else
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -606,12 +607,15 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
         state->splitScreenActive = 0;
     }
     // C and shift-C changes cameras
-    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction) {
+    if (state->splitScreenActive == 0 || (GLFW_KEY_C == aKey && GLFW_PRESS == aAction)) {
       state->activeCamera = 0;
+    }
+    if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
+      state->activeCamera = 1;
     }
 
     // Camera controls if camera is active
-    if (state->camControl.cameraActive) {
+    if (state->activeCamera == 0 && state->camControl.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.moveForward = true;
@@ -641,26 +645,73 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
           state->camControl.speed = 1.f;
       }
     }
+    else if (state->activeCamera == 1 && state->secondCam.cameraActive) {
+      if (GLFW_KEY_W == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveForward = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveForward = false;
+      } else if (GLFW_KEY_S == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveBackward = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveBackward = false;
+      }
+      if (GLFW_KEY_A == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveLeft = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveLeft = false;
+      } else if (GLFW_KEY_D == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveRight = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveRight = false;
+      }
+      if (GLFW_KEY_LEFT_SHIFT == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.speed = 1.5f;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.speed = 1.f;
+      }
+    }
   }
 }
 
 void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    if (state->camControl.cameraActive) {
-      auto const dx = float(aX - state->camControl.lastX);
-      auto const dy = float(aY - state->camControl.lastY);
+    if (state->activeCamera == 0) {
+      if (state->camControl.cameraActive) {
+        auto const dx = float(aX - state->camControl.lastX);
+        auto const dy = float(aY - state->camControl.lastY);
 
-      state->camControl.phi += dx * kMouseSensitivity_;
+        state->camControl.phi += dx * kMouseSensitivity_;
 
-      state->camControl.theta += dy * kMouseSensitivity_;
-      if (state->camControl.theta > kPi_ / 2.f)
-        state->camControl.theta = kPi_ / 2.f;
-      else if (state->camControl.theta < -kPi_ / 2.f)
-        state->camControl.theta = -kPi_ / 2.f;
+        state->camControl.theta += dy * kMouseSensitivity_;
+        if (state->camControl.theta > kPi_ / 2.f)
+          state->camControl.theta = kPi_ / 2.f;
+        else if (state->camControl.theta < -kPi_ / 2.f)
+          state->camControl.theta = -kPi_ / 2.f;
+      }
+      state->camControl.lastX = float(aX);
+      state->camControl.lastY = float(aY);
     }
+    else if (state->activeCamera == 1) {
+      if (state->secondCam.cameraActive) {
+        auto const dx = float(aX - state->secondCam.lastX);
+        auto const dy = float(aY - state->secondCam.lastY);
 
-    state->camControl.lastX = float(aX);
-    state->camControl.lastY = float(aY);
+        state->secondCam.phi += dx * kMouseSensitivity_;
+
+        state->secondCam.theta += dy * kMouseSensitivity_;
+        if (state->secondCam.theta > kPi_ / 2.f)
+          state->secondCam.theta = kPi_ / 2.f;
+        else if (state->secondCam.theta < -kPi_ / 2.f)
+          state->secondCam.theta = -kPi_ / 2.f;
+      }
+      state->secondCam.lastX = float(aX);
+      state->secondCam.lastY = float(aY);
+    }
   }
 }
 } // namespace
