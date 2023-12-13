@@ -56,11 +56,19 @@ struct State_ {
     float x, y, z;
     float speed = 1.f;
   } camControl;
+  CamCtrl_ mainTrackingCameraDynamic;
+  CamCtrl_ mainTrackingCameraStatic;
 
-  CamCtrl_ secondCam;
+  CamCtrl_ splitCam;
+  CamCtrl_ splitTrackingCameraDynamic;
+  CamCtrl_ splitTrackingCameraStatic;
 
   bool splitScreenActive = 0;
-  bool activeCamera = 0; // false/0 for screen 0; true/1 for screen 1
+  bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
+
+
+  unsigned int mainCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
+  unsigned int splitCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
 
   struct Animation_ {
     bool animated;
@@ -327,54 +335,105 @@ int main() try {
     // Assuming state.camControl.theta and state.camControl.phi are the camera
     // direction angles
 
-    if (state.camControl.moveForward) {
-      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi) *
-                            cos(state.camControl.theta);
-      state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.theta);
-      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi) *
-                            cos(state.camControl.theta);
-    } else if (state.camControl.moveBackward) {
-      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi) *
-                            cos(state.camControl.theta);
-      state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.theta);
-      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi) *
-                            cos(state.camControl.theta);
-    }
 
-    if (state.camControl.moveLeft) {
-      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi + kPi_ / 2.f);
-    } else if (state.camControl.moveRight) {
-      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi + kPi_ / 2.f);
-    }
-
-    // if (state.camControl.radius <= 0.1f)
-    //   state.camControl.radius = 0.1f;
+    // If statement depending on camera
 
     Mat44f model2world = make_rotation_y(0);
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
+    Mat44f projection;
 
-    Mat44f projection = make_perspective_projection(
-        60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
-                                   // mathematical constants)
-        fbwidth / float(fbheight), 0.1f, 100.0f);
+    if (!state.splitScreenActive) {
+      projection = make_perspective_projection(
+          60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
+                                    // mathematical constants)
+          fbwidth / float(fbheight), 0.1f, 100.0f);
+    }
+    else {
+      projection = make_perspective_projection(
+        60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
+                                  // mathematical constants)
+        (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
+    }
 
-    Mat44f Rx = make_rotation_x(state.camControl.theta);
-    Mat44f Ry = make_rotation_y(state.camControl.phi);
+    Mat44f Rx, Ry, T;
 
-    Mat44f T = make_translation(
-        {state.camControl.x, state.camControl.y, -state.camControl.z});
+    if (state.mainCameraType == 0)
+    {
+      if (state.camControl.moveForward) {
+        state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi) *
+                              cos(state.camControl.theta);
+        state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.theta);
+        state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi) *
+                              cos(state.camControl.theta);
+      } else if (state.camControl.moveBackward) {
+        state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi) *
+                              cos(state.camControl.theta);
+        state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.theta);
+        state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi) *
+                              cos(state.camControl.theta);
+      }
+
+      if (state.camControl.moveLeft) {
+        state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi + kPi_ / 2.f);
+        state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi + kPi_ / 2.f);
+      } else if (state.camControl.moveRight) {
+        state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi + kPi_ / 2.f);
+        state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi + kPi_ / 2.f);
+      }
+
+      Rx = make_rotation_x(state.camControl.theta);
+      Ry = make_rotation_y(state.camControl.phi);
+
+      T = make_translation(
+          {state.camControl.x, state.camControl.y, -state.camControl.z});
+    }
+    else if (state.mainCameraType == 1)
+    {
+      state.mainTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
+      state.mainTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
+      state.mainTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 2;
+
+      Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.mainTrackingCameraDynamic.x, state.mainTrackingCameraDynamic.y, state.mainTrackingCameraDynamic.z });
+      state.mainTrackingCameraDynamic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+      state.mainTrackingCameraDynamic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+      Rx = make_rotation_x(state.mainTrackingCameraDynamic.theta);
+      Ry = make_rotation_y(state.mainTrackingCameraDynamic.phi);
+      
+      T = make_translation(
+          {-state.mainTrackingCameraDynamic.x, -state.mainTrackingCameraDynamic.y, -state.mainTrackingCameraDynamic.z});
+    }
+    else if (state.mainCameraType == 2)
+    {
+      state.mainTrackingCameraStatic.x = spaceship.location.x;
+      state.mainTrackingCameraStatic.y = spaceship.location.y + 0.5;
+      state.mainTrackingCameraStatic.z = spaceship.location.z + 2;
+
+      Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.mainTrackingCameraStatic.x, state.mainTrackingCameraStatic.y, state.mainTrackingCameraStatic.z });
+      state.mainTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+      state.mainTrackingCameraStatic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+      Rx = make_rotation_x(state.mainTrackingCameraStatic.theta);
+      Ry = make_rotation_y(state.mainTrackingCameraStatic.phi);
+
+      T = make_translation(
+          {-state.mainTrackingCameraStatic.x, -state.mainTrackingCameraStatic.y, -state.mainTrackingCameraStatic.z});
+    }
+
+    // End if
+
+
+
     world2camera = world2camera * (Rx * Ry * T);
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
@@ -444,51 +503,85 @@ int main() try {
       // Assuming state.camControl.theta and state.camControl.phi are the camera
       // direction angles
 
-      if (state.secondCam.moveForward) {
-        state.secondCam.x -= state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.phi) *
-                              cos(state.secondCam.theta);
-        state.secondCam.y += state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.theta);
-        state.secondCam.z -= state.secondCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.secondCam.phi) *
-                              cos(state.secondCam.theta);
-      } else if (state.secondCam.moveBackward) {
-        state.secondCam.x += state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.phi) *
-                              cos(state.secondCam.theta);
-        state.secondCam.y -= state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.theta);
-        state.secondCam.z += state.secondCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.secondCam.phi) *
-                              cos(state.secondCam.theta);
-      }
-
-      if (state.secondCam.moveLeft) {
-        state.secondCam.x += state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.phi + kPi_ / 2.f);
-        state.secondCam.z += state.secondCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.secondCam.phi + kPi_ / 2.f);
-      } else if (state.secondCam.moveRight) {
-        state.secondCam.x -= state.secondCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.secondCam.phi + kPi_ / 2.f);
-        state.secondCam.z -= state.secondCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.secondCam.phi + kPi_ / 2.f);
-      }
-
       model2world = make_rotation_y(0);
       world2camera = make_translation({0.f, 0.f, 0.f});
 
       projection = make_perspective_projection(
-          60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
+          60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
                                     // mathematical constants)
-          fbwidth / float(fbheight), 0.1f, 100.0f);
+          (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
 
-      Rx = make_rotation_x(state.secondCam.theta);
-      Ry = make_rotation_y(state.secondCam.phi);
+      if (state.splitCameraType == 0) {
+        if (state.splitCam.moveForward) {
+          state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+          state.splitCam.y += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.theta);
+          state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+        } else if (state.splitCam.moveBackward) {
+          state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+          state.splitCam.y -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.theta);
+          state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+        }
 
-      T = make_translation(
-          {state.secondCam.x, state.secondCam.y, -state.secondCam.z});
+        if (state.splitCam.moveLeft) {
+          state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi + kPi_ / 2.f);
+          state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi + kPi_ / 2.f);
+        } else if (state.splitCam.moveRight) {
+          state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi + kPi_ / 2.f);
+          state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi + kPi_ / 2.f);
+        }
+        Rx = make_rotation_x(state.splitCam.theta);
+        Ry = make_rotation_y(state.splitCam.phi);
+
+        T = make_translation(
+          {state.splitCam.x, state.splitCam.y, -state.splitCam.z});
+      }
+      else if (state.splitCameraType == 1)
+      {
+        state.splitTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
+        state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
+        state.splitTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 2;
+
+        Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.splitTrackingCameraDynamic.x, state.splitTrackingCameraDynamic.y, state.splitTrackingCameraDynamic.z });
+        state.splitTrackingCameraDynamic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+        state.splitTrackingCameraDynamic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+        Rx = make_rotation_x(state.splitTrackingCameraDynamic.theta);
+        Ry = make_rotation_y(state.splitTrackingCameraDynamic.phi);
+        
+        T = make_translation(
+            {-state.splitTrackingCameraDynamic.x, -state.splitTrackingCameraDynamic.y, -state.splitTrackingCameraDynamic.z});
+      }
+      else if (state.splitCameraType == 2)
+      {
+        state.splitTrackingCameraStatic.x = spaceship.location.x;
+        state.splitTrackingCameraStatic.y = spaceship.location.y + 0.5;
+        state.splitTrackingCameraStatic.z = spaceship.location.z + 2;
+
+        Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.splitTrackingCameraStatic.x, state.splitTrackingCameraStatic.y, state.splitTrackingCameraStatic.z });
+        state.splitTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+        state.splitTrackingCameraStatic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+        Rx = make_rotation_x(state.splitTrackingCameraStatic.theta);
+        Ry = make_rotation_y(state.splitTrackingCameraStatic.phi);
+
+        T = make_translation(
+            {-state.splitTrackingCameraStatic.x, -state.splitTrackingCameraStatic.y, -state.splitTrackingCameraStatic.z});
+      }
+
       world2camera = world2camera * (Rx * Ry * T);
       projCameraWorld = projection * world2camera * model2world;
 
@@ -595,9 +688,9 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
     // Space toggles camera
     if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction) {
       state->camControl.cameraActive = !state->camControl.cameraActive;
-      state->secondCam.cameraActive = !state->secondCam.cameraActive;
+      state->splitCam.cameraActive = !state->splitCam.cameraActive;
 
-      if (state->camControl.cameraActive || state->secondCam.cameraActive)
+      if (state->camControl.cameraActive || state->splitCam.cameraActive)
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
       else
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -610,15 +703,41 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
         state->splitScreenActive = 0;
     }
     // C and shift-C changes cameras
-    if (state->splitScreenActive == 0 || (GLFW_KEY_C == aKey && GLFW_PRESS == aAction)) {
-      state->activeCamera = 0;
+    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods != GLFW_MOD_SHIFT) {
+      state->activeScreen = 0;
+
+      // Stop other cam from moving
+      state->splitCam.moveForward = false;
+      state->splitCam.moveBackward = false;
+      state->splitCam.moveLeft = false;
+      state->splitCam.moveRight = false;
+
+      if (state->mainCameraType == 0)
+        state->mainCameraType = 1;
+      else if (state->mainCameraType == 1)
+        state->mainCameraType = 2;
+      else if (state->mainCameraType == 2)
+        state->mainCameraType = 0;
     }
     if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
-      state->activeCamera = 1;
+      state->activeScreen = 1;
+
+      // Stop other cam from moving
+      state->camControl.moveForward = false;
+      state->camControl.moveBackward = false;
+      state->camControl.moveLeft = false;
+      state->camControl.moveRight = false;
+
+      if (state->splitCameraType == 0)
+        state->splitCameraType = 1;
+      else if (state->splitCameraType == 1)
+        state->splitCameraType = 2;
+      else if (state->splitCameraType == 2)
+        state->splitCameraType = 0;
     }
 
     // Camera controls if camera is active
-    if (state->activeCamera == 0 && state->camControl.cameraActive) {
+    if (state->activeScreen == 0 && state->camControl.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.moveForward = true;
@@ -648,34 +767,34 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
           state->camControl.speed = 1.f;
       }
     }
-    else if (state->activeCamera == 1 && state->secondCam.cameraActive) {
+    else if (state->activeScreen == 1 && state->splitCam.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
-          state->secondCam.moveForward = true;
+          state->splitCam.moveForward = true;
         else if (GLFW_RELEASE == aAction)
-          state->secondCam.moveForward = false;
+          state->splitCam.moveForward = false;
       } else if (GLFW_KEY_S == aKey) {
         if (GLFW_PRESS == aAction)
-          state->secondCam.moveBackward = true;
+          state->splitCam.moveBackward = true;
         else if (GLFW_RELEASE == aAction)
-          state->secondCam.moveBackward = false;
+          state->splitCam.moveBackward = false;
       }
       if (GLFW_KEY_A == aKey) {
         if (GLFW_PRESS == aAction)
-          state->secondCam.moveLeft = true;
+          state->splitCam.moveLeft = true;
         else if (GLFW_RELEASE == aAction)
-          state->secondCam.moveLeft = false;
+          state->splitCam.moveLeft = false;
       } else if (GLFW_KEY_D == aKey) {
         if (GLFW_PRESS == aAction)
-          state->secondCam.moveRight = true;
+          state->splitCam.moveRight = true;
         else if (GLFW_RELEASE == aAction)
-          state->secondCam.moveRight = false;
+          state->splitCam.moveRight = false;
       }
       if (GLFW_KEY_LEFT_SHIFT == aKey) {
         if (GLFW_PRESS == aAction)
-          state->secondCam.speed = 1.5f;
+          state->splitCam.speed = 1.5f;
         else if (GLFW_RELEASE == aAction)
-          state->secondCam.speed = 1.f;
+          state->splitCam.speed = 1.f;
       }
     }
   }
@@ -683,7 +802,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
 
 void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    if (state->activeCamera == 0) {
+    if (state->activeScreen == 0) {
       if (state->camControl.cameraActive) {
         auto const dx = float(aX - state->camControl.lastX);
         auto const dy = float(aY - state->camControl.lastY);
@@ -699,21 +818,21 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       state->camControl.lastX = float(aX);
       state->camControl.lastY = float(aY);
     }
-    else if (state->activeCamera == 1) {
-      if (state->secondCam.cameraActive) {
-        auto const dx = float(aX - state->secondCam.lastX);
-        auto const dy = float(aY - state->secondCam.lastY);
+    else if (state->activeScreen == 1) {
+      if (state->splitCam.cameraActive) {
+        auto const dx = float(aX - state->splitCam.lastX);
+        auto const dy = float(aY - state->splitCam.lastY);
 
-        state->secondCam.phi += dx * kMouseSensitivity_;
+        state->splitCam.phi += dx * kMouseSensitivity_;
 
-        state->secondCam.theta += dy * kMouseSensitivity_;
-        if (state->secondCam.theta > kPi_ / 2.f)
-          state->secondCam.theta = kPi_ / 2.f;
-        else if (state->secondCam.theta < -kPi_ / 2.f)
-          state->secondCam.theta = -kPi_ / 2.f;
+        state->splitCam.theta += dy * kMouseSensitivity_;
+        if (state->splitCam.theta > kPi_ / 2.f)
+          state->splitCam.theta = kPi_ / 2.f;
+        else if (state->splitCam.theta < -kPi_ / 2.f)
+          state->splitCam.theta = -kPi_ / 2.f;
       }
-      state->secondCam.lastX = float(aX);
-      state->secondCam.lastY = float(aY);
+      state->splitCam.lastX = float(aX);
+      state->splitCam.lastY = float(aY);
     }
   }
 }
