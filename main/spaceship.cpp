@@ -1,6 +1,7 @@
 #include "spaceship.hpp"
 #include "shapes.hpp"
 #include <iostream>
+#include <math.h>
 #include <vector>
 
 #include "../support/program.hpp"
@@ -13,19 +14,34 @@ void Spaceship::render(Mat44f projCameraWorld) {
                       {GL_FRAGMENT_SHADER, "assets/spaceship.frag"}});
 
   glUseProgram(prog.programId());
+
+  Vec3f lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
+  glUniform3fv(5, 1, &lightDir.x);
+  glUniform3f(6, 0.9f, 0.9f, 0.6f);
+  glUniform3f(7, 0.05f, 0.05f, 0.05f);
   glUniformMatrix4fv(0, 1, GL_TRUE, projCameraWorld.v);
 
-  glUniformMatrix4fv(1, 1, GL_TRUE,
-                     (make_rotation_x(angle) *
-                      make_translation({offset.x, offset.y, offset.z}))
-                         .v);
-  // glUniform4f(2,color.x, color.y, color.z, color.w);
+  glUniformMatrix4fv(
+      3, 1, GL_TRUE,
+      (make_translation({location.x + offset.x, location.y + offset.y,
+                         location.z + offset.z}) *
+       make_rotation_z(angle) *
+       make_translation({-location.x, -location.y, -location.z}))
+          .v);
   glBindVertexArray(spaceshipVAO);
   glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 void Spaceship::update(float ts) {
+
+  constexpr float kPi_ = 3.1415926f;
   offset.y = pow(ts / 3, 2);
+  offset.x = pow(ts / 7, 3);
+
+  float angleNumerator = -offset.y + pow((ts + 0.01) / 3, 2);
+  float angleDenominator = -offset.x + pow((ts + 0.01) / 7, 3);
+
+  angle = atan(angleNumerator / angleDenominator) - kPi_ / 2;
 }
 
 Spaceship::Spaceship(std::size_t aSubdivs, Mat44f aPreTransform) {

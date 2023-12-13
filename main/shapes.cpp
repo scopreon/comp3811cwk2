@@ -76,8 +76,7 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
       pos.push_back(Vec3f{0.f, 0, 0});
 
       // Normals for capped triangles
-      Vec3f normalCap =
-          normalize(cross(Vec3f{0.f, 0.f, 1.f}, vertex3 - vertex1));
+      Vec3f normalCap = Vec3f{1,0,0};
       Vec3f normalCap2 = -normalCap;
 
       normals.push_back(normalCap);
