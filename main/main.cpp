@@ -57,6 +57,8 @@ struct State_ {
     float speed = 1.f;
   } camControl;
 
+  CamCtrl_ secondCam;
+
   struct Animation_ {
     bool animated;
     float time;
@@ -275,6 +277,21 @@ int main() try {
     // Let GLFW process events
     glfwPollEvents();
 
+    // Calculate time
+    std::chrono::steady_clock::time_point currentTime =
+        std::chrono::steady_clock::now();
+    std::chrono::duration<float> deltaTime =
+        std::chrono::duration_cast<std::chrono::duration<float>>(currentTime -
+                                                                 prevTime);
+    prevTime = currentTime;
+    float deltaTimeInSeconds = deltaTime.count();
+
+    auto const now = Clock::now();
+    float dt = std::chrono::duration_cast<Secondsf>(now - last).count();
+    last = now;
+
+    // Screen 0
+
     // Check if window was resized.
     float fbwidth, fbheight;
     {
@@ -293,12 +310,9 @@ int main() try {
         } while (0 == nwidth || 0 == nheight);
       }
 
-      glViewport(0, 0, nwidth, nheight);
+      
+      glViewport(0, 0, fbwidth / 2, fbheight);
     }
-
-    auto const now = Clock::now();
-    float dt = std::chrono::duration_cast<Secondsf>(now - last).count();
-    last = now;
 
     // angle += dt * kPi_ * 0.3f;
     // if (angle >= 2.f * kPi_)
@@ -370,15 +384,6 @@ int main() try {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::chrono::steady_clock::time_point currentTime =
-        std::chrono::steady_clock::now();
-    std::chrono::duration<float> deltaTime =
-        std::chrono::duration_cast<std::chrono::duration<float>>(currentTime -
-                                                                 prevTime);
-
-    prevTime = currentTime;
-    float deltaTimeInSeconds = deltaTime.count();
-
     if (state.animation.animated) {
       state.animation.time += deltaTimeInSeconds;
     }
@@ -420,9 +425,122 @@ int main() try {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+    
+    // Screen 2
+    glViewport(fbwidth / 2, 0, fbwidth / 2, fbheight);
 
+    // angle += dt * kPi_ * 0.3f;
+    // if (angle >= 2.f * kPi_)
+    //   angle -= 2.f * kPi_;
+
+    // Update camera state
+    // Assuming state.camControl.theta and state.camControl.phi are the camera
+    // direction angles
+
+    if (state.camControl.moveForward) {
+      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi) *
+                            cos(state.camControl.theta);
+      state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.theta);
+      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi) *
+                            cos(state.camControl.theta);
+    } else if (state.camControl.moveBackward) {
+      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi) *
+                            cos(state.camControl.theta);
+      state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.theta);
+      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi) *
+                            cos(state.camControl.theta);
+    }
+
+    if (state.camControl.moveLeft) {
+      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi + kPi_ / 2.f);
+    } else if (state.camControl.moveRight) {
+      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi + kPi_ / 2.f);
+    }
+
+    // if (state.camControl.radius <= 0.1f)
+    //   state.camControl.radius = 0.1f;
+
+    model2world = make_rotation_y(0);
+    world2camera = make_translation({0.f, 0.f, 0.f});
+
+    projection = make_perspective_projection(
+        60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
+                                   // mathematical constants)
+        fbwidth / float(fbheight), 0.1f, 100.0f);
+
+    Rx = make_rotation_x(state.camControl.theta);
+    Ry = make_rotation_y(state.camControl.phi);
+
+    T = make_translation(
+        {state.camControl.x, state.camControl.y, -state.camControl.z});
+    world2camera = world2camera * (Rx * Ry * T);
+    projCameraWorld = projection * world2camera * model2world;
+
+    normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
+    lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
+    // Draw scene
     OGL_CHECKPOINT_DEBUG();
 
+    // Particle System
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (state.animation.animated) {
+      state.animation.time += deltaTimeInSeconds;
+    }
+    if (state.animation.animated) {
+      particleSystem.Update(deltaTimeInSeconds);
+      particleSystem.Spawn(particle);
+      particleSystem.Render(projCameraWorld);
+    }
+
+    glDisable(GL_BLEND);
+    // Particle System end
+
+    glUseProgram(prog.programId());
+
+    glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
+    glUniformMatrix3fv(3, 1, GL_TRUE, normalMatrix.v);
+
+    glUniform3fv(5, 1, &lightDir.x);
+    glUniform3f(6, 0.9f, 0.9f, 0.6f);
+    glUniform3f(7, 0.05f, 0.05f, 0.05f);
+
+    glUniform3fv(0, 1, baseColor);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+
+    for (int i = 0; i < vaos.size(); i++) {
+      glBindVertexArray(vaos[i]);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, textures[i]);
+      glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
+    }
+
+    spaceship.render(projCameraWorld);
+    spaceship.update(state.animation.time);
+    particle.Position = spaceship.location + spaceship.offset;
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+
+    // End Screens
+    OGL_CHECKPOINT_DEBUG();
     // Display results
     glfwSwapBuffers(window);
   }
