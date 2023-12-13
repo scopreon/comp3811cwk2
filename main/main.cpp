@@ -57,6 +57,7 @@ struct State_ {
     float speed = 1.f;
   } camControl;
 
+
   CamCtrl_ secondCam;
 
   CamCtrl_ trackingCameraDynamic;
@@ -388,17 +389,22 @@ int main() try {
     }
     else if (state.cameraType == 1)
     {
+      state.trackingCameraDynamic.x =  spaceship.location.x + spaceship.offset.x;
+      state.trackingCameraDynamic.y =  spaceship.location.y + spaceship.offset.y + 0.25;
+      state.trackingCameraDynamic.z =  spaceship.location.z + spaceship.offset.z + 1.5;
+
       Rx = make_rotation_x(state.trackingCameraDynamic.theta);
       Ry = make_rotation_y(state.trackingCameraDynamic.phi);
-
+      
       T = make_translation(
-          {state.trackingCameraDynamic.x, state.trackingCameraDynamic.y, -state.trackingCameraDynamic.z});
+          {-state.trackingCameraDynamic.x, -state.trackingCameraDynamic.y, -state.trackingCameraDynamic.z});
     }
     else if (state.cameraType == 2)
     {
-      state.trackingCameraStatic.x =  spaceship.location.x + spaceship.offset.x;
-      state.trackingCameraStatic.y =  spaceship.location.y + spaceship.offset.y + 0.25;
-      state.trackingCameraStatic.z =  spaceship.location.z + spaceship.offset.z + 1.5;
+
+      state.trackingCameraStatic.x =  spaceship.location.x;
+      state.trackingCameraStatic.y =  spaceship.location.y + 0.25;
+      state.trackingCameraStatic.z =  spaceship.location.z + 1.5;
 
       Rx = make_rotation_x(state.trackingCameraStatic.theta);
       Ry = make_rotation_y(state.trackingCameraStatic.phi);
