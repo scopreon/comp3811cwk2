@@ -60,6 +60,7 @@ struct State_ {
   CamCtrl_ secondCam;
 
   bool splitScreenActive = 0;
+  bool activeCamera = 0; // false/0 for screen 0; true/1 for screen 1
 
   struct Animation_ {
     bool animated;
@@ -603,6 +604,10 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
         state->splitScreenActive = 1;
       else
         state->splitScreenActive = 0;
+    }
+    // C and shift-C changes cameras
+    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction) {
+      state->activeCamera = 0;
     }
 
     // Camera controls if camera is active
