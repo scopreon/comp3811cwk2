@@ -308,6 +308,8 @@ int main() try {
     last = now;
 
     // Screen 0
+    // Benchmark start query
+    glQueryCounter(queries[0], GL_TIMESTAMP);
 
     // Check if window was resized.
     float fbwidth, fbheight;
@@ -490,16 +492,12 @@ int main() try {
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
 
-    // Benchmark start query
-    glQueryCounter(queries[0], GL_TIMESTAMP);
+    
 
     spaceship.render(projCameraWorld);
     spaceship.update(state.animation.time);
     particle.Position = spaceship.location + spaceship.offset;
     glUseProgram(prog.programId());
-
-    // Benchmark end query
-    glQueryCounter(queries[1], GL_TIMESTAMP);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
@@ -649,6 +647,10 @@ int main() try {
 
       OGL_CHECKPOINT_DEBUG();
     }
+
+    // Benchmark end query
+    glQueryCounter(queries[1], GL_TIMESTAMP);
+
     // End Screens
 
     // Retrieve and calculate time
@@ -660,8 +662,6 @@ int main() try {
     glGetQueryObjectui64v(queries[0], GL_QUERY_RESULT, &startTime);
     glGetQueryObjectui64v(queries[1], GL_QUERY_RESULT, &endTime);
     double renderTime = (endTime - startTime) / 1000000.0; // Time in milliseconds
-
-    printf("\nrender time: %f\n", renderTime);
     
     // Display results
     glfwSwapBuffers(window);
