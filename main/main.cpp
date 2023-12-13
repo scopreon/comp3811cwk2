@@ -487,38 +487,6 @@ int main() try {
       // Assuming state.camControl.theta and state.camControl.phi are the camera
       // direction angles
 
-      if (state.splitCam.moveForward) {
-        state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.phi) *
-                              cos(state.splitCam.theta);
-        state.splitCam.y += state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.theta);
-        state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.splitCam.phi) *
-                              cos(state.splitCam.theta);
-      } else if (state.splitCam.moveBackward) {
-        state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.phi) *
-                              cos(state.splitCam.theta);
-        state.splitCam.y -= state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.theta);
-        state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.splitCam.phi) *
-                              cos(state.splitCam.theta);
-      }
-
-      if (state.splitCam.moveLeft) {
-        state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.phi + kPi_ / 2.f);
-        state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.splitCam.phi + kPi_ / 2.f);
-      } else if (state.splitCam.moveRight) {
-        state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
-                              sin(state.splitCam.phi + kPi_ / 2.f);
-        state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
-                              cos(state.splitCam.phi + kPi_ / 2.f);
-      }
-
       model2world = make_rotation_y(0);
       world2camera = make_translation({0.f, 0.f, 0.f});
 
@@ -527,11 +495,73 @@ int main() try {
                                     // mathematical constants)
           fbwidth / float(fbheight), 0.1f, 100.0f);
 
-      Rx = make_rotation_x(state.splitCam.theta);
-      Ry = make_rotation_y(state.splitCam.phi);
+      if (state.splitCameraType == 0) {
+        if (state.splitCam.moveForward) {
+          state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+          state.splitCam.y += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.theta);
+          state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+        } else if (state.splitCam.moveBackward) {
+          state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+          state.splitCam.y -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.theta);
+          state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi) *
+                                cos(state.splitCam.theta);
+        }
 
-      T = make_translation(
+        if (state.splitCam.moveLeft) {
+          state.splitCam.x += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi + kPi_ / 2.f);
+          state.splitCam.z += state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi + kPi_ / 2.f);
+        } else if (state.splitCam.moveRight) {
+          state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                sin(state.splitCam.phi + kPi_ / 2.f);
+          state.splitCam.z -= state.splitCam.speed * kMovementPerSecond_ * dt *
+                                cos(state.splitCam.phi + kPi_ / 2.f);
+        }
+        Rx = make_rotation_x(state.splitCam.theta);
+        Ry = make_rotation_y(state.splitCam.phi);
+
+        T = make_translation(
           {state.splitCam.x, state.splitCam.y, -state.splitCam.z});
+      }
+      else if (state.splitCameraType == 1)
+      {
+        state.splitTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
+        state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.25;
+        state.splitTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 1.5;
+
+        Rx = make_rotation_x(state.splitTrackingCameraDynamic.theta);
+        Ry = make_rotation_y(state.splitTrackingCameraDynamic.phi);
+        
+        T = make_translation(
+            {-state.splitTrackingCameraDynamic.x, -state.splitTrackingCameraDynamic.y, -state.splitTrackingCameraDynamic.z});
+      }
+      else if (state.splitCameraType == 2)
+      {
+        state.splitTrackingCameraStatic.x = spaceship.location.x;
+        state.splitTrackingCameraStatic.y = spaceship.location.y + 0.25;
+        state.splitTrackingCameraStatic.z = spaceship.location.z + 1.5;
+
+        Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.splitTrackingCameraStatic.x, state.splitTrackingCameraStatic.y, state.splitTrackingCameraStatic.z });
+        state.splitTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+        state.splitTrackingCameraStatic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
+
+        Rx = make_rotation_x(state.splitTrackingCameraStatic.theta);
+        Ry = make_rotation_y(state.splitTrackingCameraStatic.phi);
+
+        T = make_translation(
+            {-state.splitTrackingCameraStatic.x, -state.splitTrackingCameraStatic.y, -state.splitTrackingCameraStatic.z});
+      }
+
       world2camera = world2camera * (Rx * Ry * T);
       projCameraWorld = projection * world2camera * model2world;
 
