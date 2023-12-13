@@ -61,3 +61,25 @@ GLuint create_vao( SimpleMeshData const& aMeshData )
     return vao;
 }
 
+GLuint create_rectangle(const Vec3f& topLeft, const Vec3f& topRight, const Vec3f& bottomLeft, const Vec3f& bottomRight, SimpleMeshData& rectangle) {
+    
+    Vec3f norm = { 0.f, 0.f, 0.f };
+    Vec2f texcoord = { 0.f, 0.f };
+    rectangle.normals.push_back(norm);
+    rectangle.texcoords.push_back(texcoord);
+
+    rectangle.positions.push_back(topLeft);
+    rectangle.positions.push_back(topRight);
+    rectangle.positions.push_back(bottomLeft);
+    rectangle.positions.push_back(bottomLeft);
+    rectangle.positions.push_back(topRight);
+    rectangle.positions.push_back(bottomRight);
+
+    for (int i = 0; i < 6; ++i) {
+      rectangle.colors.push_back({1.0f, 1.0f, 1.0f});
+    }
+    
+    GLuint out_rectangle = create_vao(rectangle);
+    
+    return out_rectangle;
+}

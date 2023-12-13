@@ -80,6 +80,7 @@ void glfw_callback_error_(int, char const *);
 
 void glfw_callback_key_(GLFWwindow *, int, int, int, int);
 void glfw_callback_motion_(GLFWwindow *, double, double);
+void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods);
 
 struct GLFWCleanupHelper {
   ~GLFWCleanupHelper();
@@ -142,6 +143,7 @@ int main() try {
 
   glfwSetKeyCallback(window, &glfw_callback_key_);
   glfwSetCursorPosCallback(window, &glfw_callback_motion_);
+  glfwSetMouseButtonCallback(window, &mouse_click_callback_);
 
   // Set up drawing stuff
   glfwMakeContextCurrent(window);
@@ -188,6 +190,9 @@ int main() try {
   ShaderProgram prog({{GL_VERTEX_SHADER, "assets/default.vert"},
                       {GL_FRAGMENT_SHADER, "assets/default.frag"}});
 
+  ShaderProgram ui({{GL_VERTEX_SHADER, "assets/2dshader.vert"},
+                      {GL_FRAGMENT_SHADER, "assets/2dshader.frag"}});
+
   state.prog = &prog;
   //   state.camControl.radius = 10.f;
 
@@ -195,9 +200,9 @@ int main() try {
 
   float angle = 0.f;
 
-  std::vector<GLuint> vaos;
-  std::vector<std::size_t> vertexCounts;
-  std::vector<GLuint> textures;
+  std::vector<GLuint> vaos, ui_vaos;
+  std::vector<std::size_t> vertexCounts, vertexCountsUI;
+  std::vector<GLuint> textures, ui_texture;
   std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d("assets/L4343A-4k.jpeg");
@@ -278,6 +283,18 @@ int main() try {
       std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point initialTime =
       std::chrono::steady_clock::now();
+
+  SimpleMeshData rectangle, button_one, button_two;
+
+  GLuint ui_vao = create_rectangle({ -0.8f, 0.8f, 0.0f }, { -0.6f, 0.8f, 0.0f }, { -0.8f, 0.6f, 0.0f }, { -0.6f, 0.6f, 0.0f }, rectangle);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(rectangle.positions.size());
+  ui_vao = create_rectangle({ 0.4f, -0.6f, 0.0f }, { 0.1f, -0.6f, 0.0f }, { 0.4f, -0.8f, 0.0f }, { 0.1f, -0.8f, 0.0f }, button_one);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(button_one.positions.size());
+  ui_vao = create_rectangle({ -0.4f, -0.6f, 0.0f }, { -0.1f, -0.6f, 0.0f }, { -0.4f, -0.8f, 0.0f }, { -0.1f, -0.8f, 0.0f }, button_two);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(button_two.positions.size());
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
@@ -493,6 +510,21 @@ int main() try {
     glBindVertexArray(0);
     glUseProgram(0);
 
+    glUseProgram(ui.programId());
+    glDisable(GL_DEPTH_TEST);
+
+    glUniform3fv(0, 1, baseColor);
+
+    for (int i = 0; i < ui_vaos.size(); i++) {
+      glBindVertexArray(ui_vaos[i]);
+      glDrawArrays(GL_TRIANGLES, 0, vertexCountsUI[i]);
+    }
+
+    glBindVertexArray( 0 );
+    glUseProgram( 0 );
+
+    glEnable(GL_DEPTH_TEST);
+
     OGL_CHECKPOINT_DEBUG();
     
     // Screen 2
@@ -634,6 +666,8 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, 0);
       glBindVertexArray(0);
       glUseProgram(0);
+
+     
 
       OGL_CHECKPOINT_DEBUG();
     }
@@ -836,7 +870,52 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
     }
   }
 }
-} // namespace
+  void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods) {
+    if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(window))) {
+      if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+
+        double xpos = 0, ypos = 0;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
+        float rect_left = -0.4f;
+        float rect_right = -0.1f;
+        float rect_top = -0.6f;
+        float rect_bottom = -0.8f;
+
+        int rectangle_x_one = static_cast<int>((rect_left + 1.0) * 0.5 * width);
+        int rectangle_x_two = static_cast<int>((rect_right + 1.0) * 0.5 * width);
+        int rectangle_y_one = static_cast<int>((1.0 - rect_top) * 0.5 * height);
+        int rectangle_y_two = static_cast<int>((1.0 - rect_bottom) * 0.5 * height);
+
+        float rect_left_two = 0.1f;
+        float rect_right_two = 0.4f;
+        float rect_top_two = -0.6f;
+        float rect_bottom_two = -0.8f;
+
+        int rectangle_two_x_one = static_cast<int>((rect_left_two + 1.0) * 0.5 * width);
+        int rectangle_two_x_two = static_cast<int>((rect_right_two + 1.0) * 0.5 * width);
+        int rectangle_two_y_one = static_cast<int>((1.0 - rect_top_two) * 0.5 * height);
+        int rectangle_two_y_two = static_cast<int>((1.0 - rect_bottom_two) * 0.5 * height);
+
+        if (rectangle_x_one <= xpos && rectangle_x_two >= xpos && 
+            rectangle_y_one <= ypos && rectangle_y_two >= ypos) {
+          // In left rectangle, launch spaceship
+          state->animation.animated = true;
+        }
+        else if (rectangle_two_x_one <= xpos && rectangle_two_x_two >= xpos && 
+                rectangle_two_y_one <= ypos && rectangle_two_y_two >= ypos) {
+          // In right rectangle, reset spaceship
+          state->animation.animated = false;
+          state->animation.time = 0;
+        }
+      }
+    }
+  }
+}
+ // namespace
 
 namespace {
 GLFWCleanupHelper::~GLFWCleanupHelper() { glfwTerminate(); }
