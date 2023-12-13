@@ -391,8 +391,12 @@ int main() try {
     else if (state.mainCameraType == 1)
     {
       state.mainTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
-      state.mainTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.25;
-      state.mainTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 1.5;
+      state.mainTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
+      state.mainTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 2;
+
+      Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.mainTrackingCameraDynamic.x, state.mainTrackingCameraDynamic.y, state.mainTrackingCameraDynamic.z });
+      state.mainTrackingCameraDynamic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+      state.mainTrackingCameraDynamic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
 
       Rx = make_rotation_x(state.mainTrackingCameraDynamic.theta);
       Ry = make_rotation_y(state.mainTrackingCameraDynamic.phi);
@@ -403,8 +407,8 @@ int main() try {
     else if (state.mainCameraType == 2)
     {
       state.mainTrackingCameraStatic.x = spaceship.location.x;
-      state.mainTrackingCameraStatic.y = spaceship.location.y + 0.25;
-      state.mainTrackingCameraStatic.z = spaceship.location.z + 1.5;
+      state.mainTrackingCameraStatic.y = spaceship.location.y + 0.5;
+      state.mainTrackingCameraStatic.z = spaceship.location.z + 2;
 
       Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.mainTrackingCameraStatic.x, state.mainTrackingCameraStatic.y, state.mainTrackingCameraStatic.z });
       state.mainTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
@@ -536,8 +540,12 @@ int main() try {
       else if (state.splitCameraType == 1)
       {
         state.splitTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
-        state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.25;
-        state.splitTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 1.5;
+        state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
+        state.splitTrackingCameraDynamic.z = spaceship.location.z + spaceship.offset.z + 2;
+
+        Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.splitTrackingCameraDynamic.x, state.splitTrackingCameraDynamic.y, state.splitTrackingCameraDynamic.z });
+        state.splitTrackingCameraDynamic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
+        state.splitTrackingCameraDynamic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
 
         Rx = make_rotation_x(state.splitTrackingCameraDynamic.theta);
         Ry = make_rotation_y(state.splitTrackingCameraDynamic.phi);
@@ -548,8 +556,8 @@ int main() try {
       else if (state.splitCameraType == 2)
       {
         state.splitTrackingCameraStatic.x = spaceship.location.x;
-        state.splitTrackingCameraStatic.y = spaceship.location.y + 0.25;
-        state.splitTrackingCameraStatic.z = spaceship.location.z + 1.5;
+        state.splitTrackingCameraStatic.y = spaceship.location.y + 0.5;
+        state.splitTrackingCameraStatic.z = spaceship.location.z + 2;
 
         Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.splitTrackingCameraStatic.x, state.splitTrackingCameraStatic.y, state.splitTrackingCameraStatic.z });
         state.splitTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
