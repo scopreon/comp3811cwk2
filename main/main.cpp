@@ -59,8 +59,14 @@ struct State_ {
 
   CamCtrl_ secondCam;
 
+  CamCtrl_ trackingCameraDynamic;
+  CamCtrl_ trackingCameraStatic;
+
   bool splitScreenActive = 0;
   bool activeCamera = 0; // false/0 for screen 0; true/1 for screen 1
+
+
+  unsigned int cameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
 
   struct Animation_ {
     bool animated;
@@ -327,40 +333,8 @@ int main() try {
     // Assuming state.camControl.theta and state.camControl.phi are the camera
     // direction angles
 
-    if (state.camControl.moveForward) {
-      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi) *
-                            cos(state.camControl.theta);
-      state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.theta);
-      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi) *
-                            cos(state.camControl.theta);
-    } else if (state.camControl.moveBackward) {
-      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi) *
-                            cos(state.camControl.theta);
-      state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.theta);
-      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi) *
-                            cos(state.camControl.theta);
-    }
 
-    if (state.camControl.moveLeft) {
-      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi + kPi_ / 2.f);
-    } else if (state.camControl.moveRight) {
-      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
-                            cos(state.camControl.phi + kPi_ / 2.f);
-    }
-
-    // if (state.camControl.radius <= 0.1f)
-    //   state.camControl.radius = 0.1f;
+    // If statement depending on camera
 
     Mat44f model2world = make_rotation_y(0);
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
@@ -370,11 +344,73 @@ int main() try {
                                    // mathematical constants)
         fbwidth / float(fbheight), 0.1f, 100.0f);
 
-    Mat44f Rx = make_rotation_x(state.camControl.theta);
-    Mat44f Ry = make_rotation_y(state.camControl.phi);
+    Mat44f Rx, Ry, T;
 
-    Mat44f T = make_translation(
-        {state.camControl.x, state.camControl.y, -state.camControl.z});
+    if (state.cameraType == 0)
+    {
+      if (state.camControl.moveForward) {
+        state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi) *
+                              cos(state.camControl.theta);
+        state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.theta);
+        state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi) *
+                              cos(state.camControl.theta);
+      } else if (state.camControl.moveBackward) {
+        state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi) *
+                              cos(state.camControl.theta);
+        state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.theta);
+        state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi) *
+                              cos(state.camControl.theta);
+      }
+
+      if (state.camControl.moveLeft) {
+        state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi + kPi_ / 2.f);
+        state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi + kPi_ / 2.f);
+      } else if (state.camControl.moveRight) {
+        state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              sin(state.camControl.phi + kPi_ / 2.f);
+        state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                              cos(state.camControl.phi + kPi_ / 2.f);
+      }
+
+      Rx = make_rotation_x(state.camControl.theta);
+      Ry = make_rotation_y(state.camControl.phi);
+
+      T = make_translation(
+          {state.camControl.x, state.camControl.y, -state.camControl.z});
+    }
+    else if (state.cameraType == 1)
+    {
+      Rx = make_rotation_x(state.trackingCameraDynamic.theta);
+      Ry = make_rotation_y(state.trackingCameraDynamic.phi);
+
+      T = make_translation(
+          {state.trackingCameraDynamic.x, state.trackingCameraDynamic.y, -state.trackingCameraDynamic.z});
+    }
+    else if (state.cameraType == 2)
+    {
+      state.trackingCameraStatic.x =  spaceship.location.x + spaceship.offset.x;
+      state.trackingCameraStatic.y =  spaceship.location.y + spaceship.offset.y + 0.25;
+      state.trackingCameraStatic.z =  spaceship.location.z + spaceship.offset.z + 1.5;
+
+      Rx = make_rotation_x(state.trackingCameraStatic.theta);
+      Ry = make_rotation_y(state.trackingCameraStatic.phi);
+
+      T = make_translation(
+          {-state.trackingCameraStatic.x, -state.trackingCameraStatic.y, -state.trackingCameraStatic.z});
+    }
+
+    // End if
+
+
+
     world2camera = world2camera * (Rx * Ry * T);
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
@@ -598,6 +634,15 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
       else
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    // C cycles through cameras for screen 0
+    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction) {
+      if (state->cameraType == 0)
+        state->cameraType = 1;
+      else if (state->cameraType == 1)
+        state->cameraType = 2;
+      else if (state->cameraType == 2)
+        state->cameraType = 0;
     }
     // V Splits the screen
     if (GLFW_KEY_V == aKey && GLFW_PRESS == aAction) {
