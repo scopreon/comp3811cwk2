@@ -340,11 +340,20 @@ int main() try {
 
     Mat44f model2world = make_rotation_y(0);
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
+    Mat44f projection;
 
-    Mat44f projection = make_perspective_projection(
+    if (!state.splitScreenActive) {
+      projection = make_perspective_projection(
+          60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
+                                    // mathematical constants)
+          fbwidth / float(fbheight), 0.1f, 100.0f);
+    }
+    else {
+      projection = make_perspective_projection(
         60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
-                                   // mathematical constants)
-        fbwidth / float(fbheight), 0.1f, 100.0f);
+                                  // mathematical constants)
+        (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
+    }
 
     Mat44f Rx, Ry, T;
 
@@ -497,7 +506,7 @@ int main() try {
       projection = make_perspective_projection(
           60.f * kPi_ / 180.f, // Yes, a proper π would be useful. ( C++20:
                                     // mathematical constants)
-          fbwidth / float(fbheight), 0.1f, 100.0f);
+          (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
 
       if (state.splitCameraType == 0) {
         if (state.splitCam.moveForward) {
