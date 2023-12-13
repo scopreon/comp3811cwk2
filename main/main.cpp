@@ -33,6 +33,9 @@
 
 #include "particle_system.hpp"
 
+#include <iostream>
+using namespace std;
+
 namespace {
 constexpr char const *kWindowTitle = "COMP3811 - CW2";
 
@@ -80,6 +83,7 @@ void glfw_callback_error_(int, char const *);
 
 void glfw_callback_key_(GLFWwindow *, int, int, int, int);
 void glfw_callback_motion_(GLFWwindow *, double, double);
+void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods);
 
 struct GLFWCleanupHelper {
   ~GLFWCleanupHelper();
@@ -142,6 +146,7 @@ int main() try {
 
   glfwSetKeyCallback(window, &glfw_callback_key_);
   glfwSetCursorPosCallback(window, &glfw_callback_motion_);
+  glfwSetMouseButtonCallback(window, &mouse_click_callback_);
 
   // Set up drawing stuff
   glfwMakeContextCurrent(window);
@@ -188,6 +193,9 @@ int main() try {
   ShaderProgram prog({{GL_VERTEX_SHADER, "assets/default.vert"},
                       {GL_FRAGMENT_SHADER, "assets/default.frag"}});
 
+  ShaderProgram ui({{GL_VERTEX_SHADER, "assets/2dshader.vert"},
+                      {GL_FRAGMENT_SHADER, "assets/2dshader.frag"}});
+
   state.prog = &prog;
   //   state.camControl.radius = 10.f;
 
@@ -195,9 +203,9 @@ int main() try {
 
   float angle = 0.f;
 
-  std::vector<GLuint> vaos;
-  std::vector<std::size_t> vertexCounts;
-  std::vector<GLuint> textures;
+  std::vector<GLuint> vaos, ui_vaos;
+  std::vector<std::size_t> vertexCounts, vertexCountsUI;
+  std::vector<GLuint> textures, ui_texture;
   std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d("assets/L4343A-4k.jpeg");
@@ -278,6 +286,23 @@ int main() try {
       std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point initialTime =
       std::chrono::steady_clock::now();
+
+  SimpleMeshData rectangle, button_one, button_two;
+
+
+
+  GLuint ui_vao = create_rectangle({ -0.8f, 0.8f, 0.0f }, { -0.6f, 0.8f, 0.0f }, { -0.8f, 0.6f, 0.0f }, { -0.6f, 0.6f, 0.0f }, rectangle);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(rectangle.positions.size());
+  ui_vao = create_rectangle({ 0.4f, -0.6f, 0.0f }, { 0.1f, -0.6f, 0.0f }, { 0.4f, -0.8f, 0.0f }, { 0.1f, -0.8f, 0.0f }, button_one);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(rectangle.positions.size());
+  ui_vao = create_rectangle({ -0.4f, -0.6f, 0.0f }, { -0.1f, -0.6f, 0.0f }, { -0.4f, -0.8f, 0.0f }, { -0.1f, -0.8f, 0.0f }, button_two);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(button_two.positions.size());
+
+  //glfwSetMouseButtonCallback(window, mouse_click_callback());
+
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
@@ -471,9 +496,6 @@ int main() try {
     glUniform3f(6, 0.9f, 0.9f, 0.6f);
     glUniform3f(7, 0.05f, 0.05f, 0.05f);
 
-    static float const baseColor[] = {0.2f, 1.f, 1.f};
-    glUniform3fv(0, 1, baseColor);
-
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 
@@ -492,6 +514,22 @@ int main() try {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+
+    glUseProgram(ui.programId());
+    glDisable(GL_DEPTH_TEST);
+
+    static float const baseColor[] = {1.f, 1.f, 1.f};
+    glUniform3fv(0, 1, baseColor);
+
+    for (int i = 0; i < ui_vaos.size(); i++) {
+      glBindVertexArray(ui_vaos[i]);
+      glDrawArrays(GL_TRIANGLES, 0, vertexCountsUI[i]);
+    }
+
+    glBindVertexArray( 0 );
+    glUseProgram( 0 );
+
+    glEnable(GL_DEPTH_TEST);
 
     OGL_CHECKPOINT_DEBUG();
     
@@ -836,6 +874,52 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
     }
   }
 }
+
+void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods) {
+  if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(window))) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+
+      double xpos = 0, ypos = 0;
+      glfwGetCursorPos(window, &xpos, &ypos);
+
+      int width, height;
+      glfwGetWindowSize(window, &width, &height);
+
+      float rectLeft = -0.4f;
+      float rectRight = -0.1f;
+      float rectTop = -0.6f;
+      float rectBottom = -0.8f;
+
+      int rectX1 = static_cast<int>((rectLeft + 1.0) * 0.5 * width);
+      int rectX2 = static_cast<int>((rectRight + 1.0) * 0.5 * width);
+      int rectY1 = static_cast<int>((1.0 - rectTop) * 0.5 * height);
+      int rectY2 = static_cast<int>((1.0 - rectBottom) * 0.5 * height);
+
+      float rect2Left = 0.1f;
+      float rect2Right = 0.4f;
+      float rect2Top = -0.6f;
+      float rect2Bottom = -0.8f;
+
+      int rect2X1 = static_cast<int>((rect2Left + 1.0) * 0.5 * width);
+      int rect2X2 = static_cast<int>((rect2Right + 1.0) * 0.5 * width);
+      int rect2Y1 = static_cast<int>((1.0 - rect2Top) * 0.5 * height);
+      int rect2Y2 = static_cast<int>((1.0 - rect2Bottom) * 0.5 * height);
+
+      if (rectX1 <= xpos && rectX2 >= xpos && 
+          rectY1 <= ypos && rectY2 >= ypos) {
+        // In left rectangle, launch spaceship
+        state->animation.animated = true;
+      }
+      else if (rect2X1 <= xpos && rect2X2 >= xpos && 
+              rect2Y1 <= ypos && rect2Y2 >= ypos) {
+        // In right rectangle, reset spaceship
+        state->animation.animated = false;
+        state->animation.time = 0;
+      }
+    }
+  }
+}
+
 } // namespace
 
 namespace {
