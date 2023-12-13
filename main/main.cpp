@@ -57,6 +57,11 @@ struct State_ {
     float speed = 1.f;
   } camControl;
 
+  CamCtrl_ secondCam;
+
+  bool splitScreenActive = 0;
+  bool activeCamera = 0; // false/0 for screen 0; true/1 for screen 1
+
   struct Animation_ {
     bool animated;
     float time;
@@ -275,6 +280,21 @@ int main() try {
     // Let GLFW process events
     glfwPollEvents();
 
+    // Calculate time
+    std::chrono::steady_clock::time_point currentTime =
+        std::chrono::steady_clock::now();
+    std::chrono::duration<float> deltaTime =
+        std::chrono::duration_cast<std::chrono::duration<float>>(currentTime -
+                                                                 prevTime);
+    prevTime = currentTime;
+    float deltaTimeInSeconds = deltaTime.count();
+
+    auto const now = Clock::now();
+    float dt = std::chrono::duration_cast<Secondsf>(now - last).count();
+    last = now;
+
+    // Screen 0
+
     // Check if window was resized.
     float fbwidth, fbheight;
     {
@@ -293,12 +313,11 @@ int main() try {
         } while (0 == nwidth || 0 == nheight);
       }
 
-      glViewport(0, 0, nwidth, nheight);
+      if (state.splitScreenActive)
+        glViewport(0, 0, fbwidth / 2, fbheight);
+      else
+        glViewport(0, 0, fbwidth, fbheight);
     }
-
-    auto const now = Clock::now();
-    float dt = std::chrono::duration_cast<Secondsf>(now - last).count();
-    last = now;
 
     // angle += dt * kPi_ * 0.3f;
     // if (angle >= 2.f * kPi_)
@@ -370,15 +389,6 @@ int main() try {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::chrono::steady_clock::time_point currentTime =
-        std::chrono::steady_clock::now();
-    std::chrono::duration<float> deltaTime =
-        std::chrono::duration_cast<std::chrono::duration<float>>(currentTime -
-                                                                 prevTime);
-
-    prevTime = currentTime;
-    float deltaTimeInSeconds = deltaTime.count();
-
     if (state.animation.animated) {
       state.animation.time += deltaTimeInSeconds;
     }
@@ -425,7 +435,117 @@ int main() try {
     glUseProgram(0);
 
     OGL_CHECKPOINT_DEBUG();
+    
+    // Screen 2
+    if (state.splitScreenActive) {
+      glViewport(fbwidth / 2, 0, fbwidth / 2, fbheight);
 
+      // Update camera state
+      // Assuming state.camControl.theta and state.camControl.phi are the camera
+      // direction angles
+
+      if (state.secondCam.moveForward) {
+        state.secondCam.x -= state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.phi) *
+                              cos(state.secondCam.theta);
+        state.secondCam.y += state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.theta);
+        state.secondCam.z -= state.secondCam.speed * kMovementPerSecond_ * dt *
+                              cos(state.secondCam.phi) *
+                              cos(state.secondCam.theta);
+      } else if (state.secondCam.moveBackward) {
+        state.secondCam.x += state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.phi) *
+                              cos(state.secondCam.theta);
+        state.secondCam.y -= state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.theta);
+        state.secondCam.z += state.secondCam.speed * kMovementPerSecond_ * dt *
+                              cos(state.secondCam.phi) *
+                              cos(state.secondCam.theta);
+      }
+
+      if (state.secondCam.moveLeft) {
+        state.secondCam.x += state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.phi + kPi_ / 2.f);
+        state.secondCam.z += state.secondCam.speed * kMovementPerSecond_ * dt *
+                              cos(state.secondCam.phi + kPi_ / 2.f);
+      } else if (state.secondCam.moveRight) {
+        state.secondCam.x -= state.secondCam.speed * kMovementPerSecond_ * dt *
+                              sin(state.secondCam.phi + kPi_ / 2.f);
+        state.secondCam.z -= state.secondCam.speed * kMovementPerSecond_ * dt *
+                              cos(state.secondCam.phi + kPi_ / 2.f);
+      }
+
+      model2world = make_rotation_y(0);
+      world2camera = make_translation({0.f, 0.f, 0.f});
+
+      projection = make_perspective_projection(
+          60.f * 3.1415926f / 180.f, // Yes, a proper π would be useful. ( C++20:
+                                    // mathematical constants)
+          fbwidth / float(fbheight), 0.1f, 100.0f);
+
+      Rx = make_rotation_x(state.secondCam.theta);
+      Ry = make_rotation_y(state.secondCam.phi);
+
+      T = make_translation(
+          {state.secondCam.x, state.secondCam.y, -state.secondCam.z});
+      world2camera = world2camera * (Rx * Ry * T);
+      projCameraWorld = projection * world2camera * model2world;
+
+      normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
+      lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
+      // Draw scene
+      OGL_CHECKPOINT_DEBUG();
+
+      // Particle System
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+      if (state.animation.animated) {
+        state.animation.time += deltaTimeInSeconds;
+      }
+      if (state.animation.animated) {
+        particleSystem.Update(deltaTimeInSeconds);
+        particleSystem.Spawn(particle);
+        particleSystem.Render(projCameraWorld);
+      }
+
+      glDisable(GL_BLEND);
+      // Particle System end
+
+      glUseProgram(prog.programId());
+
+      glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
+      glUniformMatrix3fv(3, 1, GL_TRUE, normalMatrix.v);
+
+      glUniform3fv(5, 1, &lightDir.x);
+      glUniform3f(6, 0.9f, 0.9f, 0.6f);
+      glUniform3f(7, 0.05f, 0.05f, 0.05f);
+
+      glUniform3fv(0, 1, baseColor);
+
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glBindVertexArray(0);
+
+      for (int i = 0; i < vaos.size(); i++) {
+        glBindVertexArray(vaos[i]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures[i]);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
+      }
+
+      spaceship.render(projCameraWorld);
+      spaceship.update(state.animation.time);
+      particle.Position = spaceship.location + spaceship.offset;
+
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glBindVertexArray(0);
+      glUseProgram(0);
+
+      OGL_CHECKPOINT_DEBUG();
+    }
+    // End Screens
+    
     // Display results
     glfwSwapBuffers(window);
   }
@@ -446,7 +566,7 @@ void glfw_callback_error_(int aErrNum, char const *aErrDesc) {
   std::fprintf(stderr, "GLFW error: %s (%d)\n", aErrDesc, aErrNum);
 }
 
-void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
+void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mods) {
   if (GLFW_KEY_ESCAPE == aKey && GLFW_PRESS == aAction) {
     glfwSetWindowShouldClose(aWindow, GLFW_TRUE);
     return;
@@ -472,19 +592,33 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
       state->animation.animated = true;
       //   state->animation.time = 0;
     }
-
     // Space toggles camera
     if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction) {
       state->camControl.cameraActive = !state->camControl.cameraActive;
+      state->secondCam.cameraActive = !state->secondCam.cameraActive;
 
-      if (state->camControl.cameraActive)
+      if (state->camControl.cameraActive || state->secondCam.cameraActive)
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
       else
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+    // V Splits the screen
+    if (GLFW_KEY_V == aKey && GLFW_PRESS == aAction) {
+      if (state->splitScreenActive == 0)
+        state->splitScreenActive = 1;
+      else
+        state->splitScreenActive = 0;
+    }
+    // C and shift-C changes cameras
+    if (state->splitScreenActive == 0 || (GLFW_KEY_C == aKey && GLFW_PRESS == aAction)) {
+      state->activeCamera = 0;
+    }
+    if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
+      state->activeCamera = 1;
+    }
 
     // Camera controls if camera is active
-    if (state->camControl.cameraActive) {
+    if (state->activeCamera == 0 && state->camControl.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.moveForward = true;
@@ -514,26 +648,73 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
           state->camControl.speed = 1.f;
       }
     }
+    else if (state->activeCamera == 1 && state->secondCam.cameraActive) {
+      if (GLFW_KEY_W == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveForward = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveForward = false;
+      } else if (GLFW_KEY_S == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveBackward = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveBackward = false;
+      }
+      if (GLFW_KEY_A == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveLeft = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveLeft = false;
+      } else if (GLFW_KEY_D == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.moveRight = true;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.moveRight = false;
+      }
+      if (GLFW_KEY_LEFT_SHIFT == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->secondCam.speed = 1.5f;
+        else if (GLFW_RELEASE == aAction)
+          state->secondCam.speed = 1.f;
+      }
+    }
   }
 }
 
 void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    if (state->camControl.cameraActive) {
-      auto const dx = float(aX - state->camControl.lastX);
-      auto const dy = float(aY - state->camControl.lastY);
+    if (state->activeCamera == 0) {
+      if (state->camControl.cameraActive) {
+        auto const dx = float(aX - state->camControl.lastX);
+        auto const dy = float(aY - state->camControl.lastY);
 
-      state->camControl.phi += dx * kMouseSensitivity_;
+        state->camControl.phi += dx * kMouseSensitivity_;
 
-      state->camControl.theta += dy * kMouseSensitivity_;
-      if (state->camControl.theta > kPi_ / 2.f)
-        state->camControl.theta = kPi_ / 2.f;
-      else if (state->camControl.theta < -kPi_ / 2.f)
-        state->camControl.theta = -kPi_ / 2.f;
+        state->camControl.theta += dy * kMouseSensitivity_;
+        if (state->camControl.theta > kPi_ / 2.f)
+          state->camControl.theta = kPi_ / 2.f;
+        else if (state->camControl.theta < -kPi_ / 2.f)
+          state->camControl.theta = -kPi_ / 2.f;
+      }
+      state->camControl.lastX = float(aX);
+      state->camControl.lastY = float(aY);
     }
+    else if (state->activeCamera == 1) {
+      if (state->secondCam.cameraActive) {
+        auto const dx = float(aX - state->secondCam.lastX);
+        auto const dy = float(aY - state->secondCam.lastY);
 
-    state->camControl.lastX = float(aX);
-    state->camControl.lastY = float(aY);
+        state->secondCam.phi += dx * kMouseSensitivity_;
+
+        state->secondCam.theta += dy * kMouseSensitivity_;
+        if (state->secondCam.theta > kPi_ / 2.f)
+          state->secondCam.theta = kPi_ / 2.f;
+        else if (state->secondCam.theta < -kPi_ / 2.f)
+          state->secondCam.theta = -kPi_ / 2.f;
+      }
+      state->secondCam.lastX = float(aX);
+      state->secondCam.lastY = float(aY);
+    }
   }
 }
 } // namespace
