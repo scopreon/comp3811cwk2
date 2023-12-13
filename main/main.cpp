@@ -64,7 +64,7 @@ struct State_ {
   CamCtrl_ trackingCameraStatic;
 
   bool splitScreenActive = 0;
-  bool activeCamera = 0; // false/0 for screen 0; true/1 for screen 1
+  bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
 
 
   unsigned int cameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
@@ -648,15 +648,6 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       else
         glfwSetInputMode(aWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
-    // C cycles through cameras for screen 0
-    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction) {
-      if (state->cameraType == 0)
-        state->cameraType = 1;
-      else if (state->cameraType == 1)
-        state->cameraType = 2;
-      else if (state->cameraType == 2)
-        state->cameraType = 0;
-    }
     // V Splits the screen
     if (GLFW_KEY_V == aKey && GLFW_PRESS == aAction) {
       if (state->splitScreenActive == 0)
@@ -665,15 +656,22 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
         state->splitScreenActive = 0;
     }
     // C and shift-C changes cameras
-    if (state->splitScreenActive == 0 || (GLFW_KEY_C == aKey && GLFW_PRESS == aAction)) {
-      state->activeCamera = 0;
+    if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods != GLFW_MOD_SHIFT) {
+      state->activeScreen = 0;
+
+      if (state->cameraType == 0)
+        state->cameraType = 1;
+      else if (state->cameraType == 1)
+        state->cameraType = 2;
+      else if (state->cameraType == 2)
+        state->cameraType = 0;
     }
     if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
-      state->activeCamera = 1;
+      state->activeScreen = 1;
     }
 
     // Camera controls if camera is active
-    if (state->activeCamera == 0 && state->camControl.cameraActive) {
+    if (state->activeScreen == 0 && state->camControl.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.moveForward = true;
@@ -703,7 +701,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
           state->camControl.speed = 1.f;
       }
     }
-    else if (state->activeCamera == 1 && state->secondCam.cameraActive) {
+    else if (state->activeScreen == 1 && state->secondCam.cameraActive) {
       if (GLFW_KEY_W == aKey) {
         if (GLFW_PRESS == aAction)
           state->secondCam.moveForward = true;
@@ -738,7 +736,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
 
 void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    if (state->activeCamera == 0) {
+    if (state->activeScreen == 0) {
       if (state->camControl.cameraActive) {
         auto const dx = float(aX - state->camControl.lastX);
         auto const dy = float(aY - state->camControl.lastY);
@@ -754,7 +752,7 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
       state->camControl.lastX = float(aX);
       state->camControl.lastY = float(aY);
     }
-    else if (state->activeCamera == 1) {
+    else if (state->activeScreen == 1) {
       if (state->secondCam.cameraActive) {
         auto const dx = float(aX - state->secondCam.lastX);
         auto const dy = float(aY - state->secondCam.lastY);
