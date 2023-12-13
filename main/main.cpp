@@ -329,7 +329,7 @@ int main() try {
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
     Mat33f normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
-    Vec3f lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
+    Vec3f lightDir = normalize(Vec3f{1.f, 1.f, -1.f});
     // Draw scene
     OGL_CHECKPOINT_DEBUG();
 
@@ -357,18 +357,13 @@ int main() try {
     // Set light direction
     glUniform3f(9, lightDir.x, lightDir.y, lightDir.z);
 
-    glUniform3f(glGetUniformLocation(prog.programId(), "material.ambient"), 1.0f, 0.5f, 0.31f);
-    glUniform3f(glGetUniformLocation(prog.programId(), "material.diffuse"), 1.0f, 0.5f, 0.31f);
-    glUniform3f(glGetUniformLocation(prog.programId(), "material.specular"), 0.5f, 0.5f, 0.5f);
-    glUniform1f(glGetUniformLocation(prog.programId(), "material.shininess"), 32.f);
-
-    glUniform3f(glGetUniformLocation(prog.programId(), "light.ambient"), 0.2f, 0.2f, 0.2f);
-    glUniform3f(glGetUniformLocation(prog.programId(), "light.diffuse"), 0.5f, 0.5f, 0.5f);
-    glUniform3f(glGetUniformLocation(prog.programId(), "light.ambient"), 1.0f, 1.0f, 1.0f);
-    
-    
-    static float const baseColor[] = {0.2f, 1.f, 1.f};
-    glUniform3fv(0, 1, baseColor);
+    glUniform3f(10, 0.25f, 0.25f, 0.25f);
+    glUniform1f(11, 32.f);
+    glUniform3f(12, 0.005f, 0.005f, 0.005f);
+  
+    glUniform3f(13, 1.0f, 1.0f, 0.0f);
+    glUniform3f(14, 1.0f, 1.0f, 1.0f);
+    glUniform1f(15, 0.1f);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
