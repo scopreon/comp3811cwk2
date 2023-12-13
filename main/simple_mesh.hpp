@@ -18,7 +18,6 @@ struct SimpleMeshData
 
 SimpleMeshData concatenate( SimpleMeshData, SimpleMeshData const& );
 
-GLuint create_rectangle(const Vec3f& topLeft, const Vec3f& topRight, const Vec3f& bottomLeft, const Vec3f& bottomRight, SimpleMeshData& rectangle);
 
 GLuint create_vao( SimpleMeshData const& );
 
