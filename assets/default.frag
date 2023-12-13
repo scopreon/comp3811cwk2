@@ -27,5 +27,5 @@ void main()
     }
 
     oColor = diffuseColor * v2fColor * textureColor;
-    //* textureColor;
+    // * textureColor;
 }
