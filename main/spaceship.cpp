@@ -113,7 +113,3 @@ Spaceship::Spaceship(std::size_t aSubdivs, Mat44f aPreTransform) {
   numVertices = spaceship.positions.size();
   spaceshipVAO = create_vao(spaceship);
 }
-
-float Spaceship::getAltitude(Spaceship spaceship) {
-  return spaceship.location.y;
-}
