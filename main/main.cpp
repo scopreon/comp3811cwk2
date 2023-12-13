@@ -282,6 +282,12 @@ int main() try {
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
 
+
+  // Benchmarking
+  GLuint queries[2];
+  glGenQueries(2, queries);
+
+
   // Main loop
   while (!glfwWindowShouldClose(window)) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -484,10 +490,16 @@ int main() try {
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
 
+    // Benchmark start query
+    glQueryCounter(queries[0], GL_TIMESTAMP);
+
     spaceship.render(projCameraWorld);
     spaceship.update(state.animation.time);
     particle.Position = spaceship.location + spaceship.offset;
     glUseProgram(prog.programId());
+
+    // Benchmark end query
+    glQueryCounter(queries[1], GL_TIMESTAMP);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
@@ -638,6 +650,18 @@ int main() try {
       OGL_CHECKPOINT_DEBUG();
     }
     // End Screens
+
+    // Retrieve and calculate time
+    GLint stopTimerAvailable = 0;
+    while (!stopTimerAvailable) {
+        glGetQueryObjectiv(queries[1], GL_QUERY_RESULT_AVAILABLE, &stopTimerAvailable);
+    }
+    GLuint64 startTime, endTime;
+    glGetQueryObjectui64v(queries[0], GL_QUERY_RESULT, &startTime);
+    glGetQueryObjectui64v(queries[1], GL_QUERY_RESULT, &endTime);
+    double renderTime = (endTime - startTime) / 1000000.0; // Time in milliseconds
+
+    printf("\nrender time: %f\n", renderTime);
     
     // Display results
     glfwSwapBuffers(window);
