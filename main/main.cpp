@@ -360,7 +360,7 @@ int main() try {
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
     Mat33f normalMatrix = mat44_to_mat33(transpose(invert(model2world)));
-    Vec3f lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
+    
     // Draw scene
     OGL_CHECKPOINT_DEBUG();
 
@@ -396,6 +396,8 @@ int main() try {
     glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
     glUniformMatrix3fv(3, 1, GL_TRUE, normalMatrix.v);
 
+
+    Vec3f lightDir = normalize(Vec3f{0.f, 1.f, -1.f});
     glUniform3fv(5, 1, &lightDir.x);
     glUniform3f(6, 0.9f, 0.9f, 0.6f);
     glUniform3f(7, 0.05f, 0.05f, 0.05f);
@@ -416,6 +418,7 @@ int main() try {
     spaceship.render(projCameraWorld);
     spaceship.update(state.animation.time);
     particle.Position = spaceship.location + spaceship.offset;
+    glUseProgram(prog.programId());
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
