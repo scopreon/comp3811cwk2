@@ -2,6 +2,7 @@
 
 #include "../vmlib/mat33.hpp"
 #include "../vmlib/mat44.hpp"
+#include "simple_mesh.hpp"
 #include <iostream>
 
 inline Vec3f cross(Vec3f aLeft, Vec3f aRight) noexcept {
@@ -77,14 +78,15 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
       // Normals for capped triangles
       Vec3f normalCap =
           normalize(cross(Vec3f{0.f, 0.f, 1.f}, vertex3 - vertex1));
+      Vec3f normalCap2 = -normalCap;
 
       normals.push_back(normalCap);
       normals.push_back(normalCap);
       normals.push_back(normalCap);
 
-      normals.push_back(normalCap);
-      normals.push_back(normalCap);
-      normals.push_back(normalCap);
+      normals.push_back(normalCap2);
+      normals.push_back(normalCap2);
+      normals.push_back(normalCap2);
 
       Vec2f texcoordCap1{1.f, prevY};
       Vec2f texcoordCap2{1.f, y};
@@ -111,7 +113,7 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     std::cout << normal.x << normal.y << normal.z << std::endl;
   }
 
-  // Transform positions
+  //   // Transform positions
   for (auto &p : pos) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
     Vec4f t = aPreTransform * p4;

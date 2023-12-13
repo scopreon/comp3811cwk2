@@ -11,6 +11,7 @@
 #include "../vmlib/mat44.hpp"
 #include "../vmlib/vec4.hpp"
 
+#include <memory>
 #include <stdexcept>
 #include <typeinfo>
 
@@ -55,6 +56,11 @@ struct State_ {
     float x, y, z;
     float speed = 1.f;
   } camControl;
+
+  struct Animation_ {
+    bool animated;
+    float time;
+  } animation;
 };
 
 void glfw_callback_error_(int, char const *);
@@ -181,8 +187,7 @@ int main() try {
   std::vector<GLuint> textures;
   std::size_t vertexCount = 0;
 
-  GLuint tex = load_texture_2d(
-      "assets/L4343A-4k.jpeg");
+  GLuint tex = load_texture_2d("assets/L4343A-4k.jpeg");
 
   auto map = load_wavefront_obj("assets/parlahti.obj");
   GLuint vao = create_vao(map);
@@ -219,19 +224,24 @@ int main() try {
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
+  // return 0;
 
-  auto spaceship =
-      make_spaceship(10, kIdentity44f * make_translation({-10.f, -0.9f, 15.f}) *
-                             make_scaling(0.1f, 0.1f, 0.1f));
-
+  //   auto spaceship =
+  //       make_spaceship(10, kIdentity44f * make_translation({-10.f,
+  //       -0.9f, 15.f}) *
+  //                              make_scaling(0.1f, 0.1f, 0.1f));
+  // return 0;
   //   for (const auto &p : shape.normals) {
   //     printf("%f, %f, %f\n", p.x, p.y, p.z);
   //   }
 
-  vao = create_vao(spaceship);
-  vaos.push_back(vao);
-  vertexCounts.push_back(spaceship.positions.size());
-  textures.push_back(0);
+  Spaceship spaceship(10, kIdentity44f *
+                              make_translation({-10.f, -0.9f, 15.f}) *
+                              make_scaling(0.1f, 0.1f, 0.1f));
+  //   vao = create_vao(spaceship);
+  //   vaos.push_back(vao);
+  //   vertexCounts.push_back(spaceship.positions.size());
+  //   textures.push_back(0);
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -240,24 +250,27 @@ int main() try {
   ParticleInit particle;
   ParticleSystem particleSystem;
 
-  particle.ColorBegin = { 254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f, 1.0f };
-  particle.ColorEnd = { 254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f };
-  particle.SizeBegin = 1.f, particle.SizeVariation = 0.5f, particle.SizeEnd = 0.0f;
-  particle.Velocity = { 1.f, 0.f, 0.f };
+  particle.ColorBegin = {254.0f / 255.0f, 212.0f / 255.0f, 123.0f / 255.0f,
+                         1.0f};
+  particle.ColorEnd = {254.0f / 255.0f, 109.0f / 255.0f, 41.0f / 255.0f, 1.0f};
+  particle.SizeBegin = 1.f, particle.SizeVariation = 0.5f,
+  particle.SizeEnd = 0.0f;
+  particle.Velocity = {0.f, -1.f, 0.f};
   particle.LifeTime = 1.0f;
-  particle.VelocityVariation = { 0.f, 0.f, 0.f };
-  particle.Position = { 1.0f, 1.0f, 1.0f };
-  particle.PositionVariation = { 0.1f, 0.1f, 0.1f };
+  particle.VelocityVariation = {0.f, 0.f, 0.f};
+  particle.Position = {-10.0f, -0.9f, 15.0f};
+  particle.PositionVariation = {0.1f, 0.1f, 0.1f};
 
-  std::chrono::steady_clock::time_point prevTime = std::chrono::steady_clock::now();
-
+  std::chrono::steady_clock::time_point prevTime =
+      std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point initialTime =
+      std::chrono::steady_clock::now();
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Let GLFW process events
     glfwPollEvents();
@@ -294,12 +307,13 @@ int main() try {
     // Update camera state
     // Assuming state.camControl.theta and state.camControl.phi are the camera
     // direction angles
+
     if (state.camControl.moveForward) {
-      state.camControl.x -=  state.camControl.speed * kMovementPerSecond_ * dt *
+      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
                             sin(state.camControl.phi) *
                             cos(state.camControl.theta);
-      state.camControl.y +=
-          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.y += state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.theta);
       state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
                             cos(state.camControl.phi) *
                             cos(state.camControl.theta);
@@ -307,23 +321,23 @@ int main() try {
       state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
                             sin(state.camControl.phi) *
                             cos(state.camControl.theta);
-      state.camControl.y -=
-          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.theta);
+      state.camControl.y -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.theta);
       state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
                             cos(state.camControl.phi) *
                             cos(state.camControl.theta);
     }
 
     if (state.camControl.moveLeft) {
-      state.camControl.x +=
-          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z +=
-          state.camControl.speed * kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.x += state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z += state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi + kPi_ / 2.f);
     } else if (state.camControl.moveRight) {
-      state.camControl.x -=
-          state.camControl.speed * kMovementPerSecond_ * dt * sin(state.camControl.phi + kPi_ / 2.f);
-      state.camControl.z -=
-          state.camControl.speed * kMovementPerSecond_ * dt * cos(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            sin(state.camControl.phi + kPi_ / 2.f);
+      state.camControl.z -= state.camControl.speed * kMovementPerSecond_ * dt *
+                            cos(state.camControl.phi + kPi_ / 2.f);
     }
 
     // if (state.camControl.radius <= 0.1f)
@@ -352,20 +366,27 @@ int main() try {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    
     // Particle System
     glEnable(GL_BLEND);
-	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-    std::chrono::duration<float> deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - prevTime);
+    std::chrono::steady_clock::time_point currentTime =
+        std::chrono::steady_clock::now();
+    std::chrono::duration<float> deltaTime =
+        std::chrono::duration_cast<std::chrono::duration<float>>(currentTime -
+                                                                 prevTime);
+
     prevTime = currentTime;
     float deltaTimeInSeconds = deltaTime.count();
-    
 
-    particleSystem.Update(deltaTimeInSeconds);
-    particleSystem.Spawn(particle);
-    particleSystem.Render(projCameraWorld);
+    if (state.animation.animated) {
+      state.animation.time += deltaTimeInSeconds;
+    }
+    if (state.animation.animated) {
+      particleSystem.Update(deltaTimeInSeconds);
+      particleSystem.Spawn(particle);
+      particleSystem.Render(projCameraWorld);
+    }
 
     glDisable(GL_BLEND);
     // Particle System end
@@ -391,6 +412,10 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, textures[i]);
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
+
+    spaceship.render(projCameraWorld);
+    spaceship.update(state.animation.time);
+    particle.Position = spaceship.location + spaceship.offset;
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
@@ -427,16 +452,22 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int) {
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
     // R-key reloads shaders.
     if (GLFW_KEY_R == aKey && GLFW_PRESS == aAction) {
-      if (state->prog) {
-        try {
-          state->prog->reload();
-          std::fprintf(stderr, "Shaders reloaded and recompiled.\n");
-        } catch (std::exception const &eErr) {
-          std::fprintf(stderr, "Error when reloading shader:\n");
-          std::fprintf(stderr, "%s\n", eErr.what());
-          std::fprintf(stderr, "Keeping old shader.\n");
-        }
-      }
+      //   if (state->prog) {
+      //     try {
+      //       state->prog->reload();
+      //       std::fprintf(stderr, "Shaders reloaded and recompiled.\n");
+      //     } catch (std::exception const &eErr) {
+      //       std::fprintf(stderr, "Error when reloading shader:\n");
+      //       std::fprintf(stderr, "%s\n", eErr.what());
+      //       std::fprintf(stderr, "Keeping old shader.\n");
+      //     }
+      //   }
+      state->animation.animated = false;
+      state->animation.time = 0;
+    }
+    if (GLFW_KEY_F == aKey && GLFW_PRESS == aAction) {
+      state->animation.animated = true;
+      //   state->animation.time = 0;
     }
 
     // Space toggles camera
