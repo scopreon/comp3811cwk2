@@ -67,7 +67,7 @@ struct State_ {
   bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
 
 
-  unsigned int cameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
+  unsigned int mainCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
 
   struct Animation_ {
     bool animated;
@@ -347,7 +347,7 @@ int main() try {
 
     Mat44f Rx, Ry, T;
 
-    if (state.cameraType == 0)
+    if (state.mainCameraType == 0)
     {
       if (state.camControl.moveForward) {
         state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
@@ -387,7 +387,7 @@ int main() try {
       T = make_translation(
           {state.camControl.x, state.camControl.y, -state.camControl.z});
     }
-    else if (state.cameraType == 1)
+    else if (state.mainCameraType == 1)
     {
       state.trackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
       state.trackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.25;
@@ -399,7 +399,7 @@ int main() try {
       T = make_translation(
           {-state.trackingCameraDynamic.x, -state.trackingCameraDynamic.y, -state.trackingCameraDynamic.z});
     }
-    else if (state.cameraType == 2)
+    else if (state.mainCameraType == 2)
     {
 
       state.trackingCameraStatic.x = spaceship.location.x;
@@ -659,12 +659,12 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
     if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods != GLFW_MOD_SHIFT) {
       state->activeScreen = 0;
 
-      if (state->cameraType == 0)
-        state->cameraType = 1;
-      else if (state->cameraType == 1)
-        state->cameraType = 2;
-      else if (state->cameraType == 2)
-        state->cameraType = 0;
+      if (state->mainCameraType == 0)
+        state->mainCameraType = 1;
+      else if (state->mainCameraType == 1)
+        state->mainCameraType = 2;
+      else if (state->mainCameraType == 2)
+        state->mainCameraType = 0;
     }
     if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
       state->activeScreen = 1;
