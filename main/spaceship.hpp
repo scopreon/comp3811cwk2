@@ -20,6 +20,7 @@ public:
 
     void update(float ts);
     void render(Mat44f projCameraWorld);
+    float getAltitude(Spaceship spaceship);
     int numVertices;
     
     float speed;
