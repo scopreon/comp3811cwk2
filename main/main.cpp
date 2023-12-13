@@ -56,11 +56,12 @@ struct State_ {
     float x, y, z;
     float speed = 1.f;
   } camControl;
-
   CamCtrl_ mainTrackingCameraDynamic;
   CamCtrl_ mainTrackingCameraStatic;
 
   CamCtrl_ splitCam;
+  CamCtrl_ splitTrackingCameraDynamic;
+  CamCtrl_ splitTrackingCameraStatic;
 
   bool splitScreenActive = 0;
   bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
@@ -401,17 +402,13 @@ int main() try {
     }
     else if (state.mainCameraType == 2)
     {
-
       state.mainTrackingCameraStatic.x = spaceship.location.x;
       state.mainTrackingCameraStatic.y = spaceship.location.y + 0.25;
       state.mainTrackingCameraStatic.z = spaceship.location.z + 1.5;
 
-
       Vec3f direction = normalize(spaceship.location + spaceship.offset - Vec3f{ state.mainTrackingCameraStatic.x, state.mainTrackingCameraStatic.y, state.mainTrackingCameraStatic.z });
       state.mainTrackingCameraStatic.phi = atan2(direction.z, direction.x) + (kPi_/2); // angle is of by 90 degree so need to add pi/2
       state.mainTrackingCameraStatic.theta = -atan2(direction.y, sqrt(direction.x * direction.x + direction.z * direction.z));
-
-
 
       Rx = make_rotation_x(state.mainTrackingCameraStatic.theta);
       Ry = make_rotation_y(state.mainTrackingCameraStatic.phi);
@@ -659,6 +656,12 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
     if (GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods != GLFW_MOD_SHIFT) {
       state->activeScreen = 0;
 
+      // Stop other cam from moving
+      state->splitCam.moveForward = false;
+      state->splitCam.moveBackward = false;
+      state->splitCam.moveLeft = false;
+      state->splitCam.moveRight = false;
+
       if (state->mainCameraType == 0)
         state->mainCameraType = 1;
       else if (state->mainCameraType == 1)
@@ -668,6 +671,19 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
     }
     if (state->splitScreenActive && GLFW_KEY_C == aKey && GLFW_PRESS == aAction && mods == GLFW_MOD_SHIFT) {
       state->activeScreen = 1;
+
+      // Stop other cam from moving
+      state->camControl.moveForward = false;
+      state->camControl.moveBackward = false;
+      state->camControl.moveLeft = false;
+      state->camControl.moveRight = false;
+
+      if (state->splitCameraType == 0)
+        state->splitCameraType = 1;
+      else if (state->splitCameraType == 1)
+        state->splitCameraType = 2;
+      else if (state->splitCameraType == 2)
+        state->splitCameraType = 0;
     }
 
     // Camera controls if camera is active
