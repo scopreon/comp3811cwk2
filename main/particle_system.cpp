@@ -186,5 +186,6 @@ void ParticleSystem::Spawn(const ParticleInit& particleInit)
 	particle.SizeEnd = particleInit.SizeEnd;
 
     // Update pool index
-	poolIndex = --poolIndex % particlePool.size();
+    unsigned int newIndex = --poolIndex % particlePool.size();
+	poolIndex = newIndex;
 }
