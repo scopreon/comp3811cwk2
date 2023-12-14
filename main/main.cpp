@@ -35,7 +35,7 @@
 
 #include "particle_system.hpp"
 
-// benchmark time vectors
+// Vectors to hold render times for benchmarking
 std::vector<double> fullRenderTime;
 std::vector<double> customRenderTime;
 std::vector<double> otherRenderTime;
@@ -444,10 +444,6 @@ int main() try {
           {-state.mainTrackingCameraStatic.x, -state.mainTrackingCameraStatic.y, -state.mainTrackingCameraStatic.z});
     }
 
-    // End if
-
-
-
     world2camera = world2camera * (Rx * Ry * T);
     Mat44f projCameraWorld = projection * world2camera * model2world;
 
@@ -474,7 +470,7 @@ int main() try {
     glDisable(GL_BLEND);
     // Particle System end
 
-    // Other render time start query
+    // Full render time start query
     glQueryCounter(queries[4], GL_TIMESTAMP);
 
     glUseProgram(prog.programId());
@@ -500,11 +496,15 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, textures[i]);
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
+    // Other render time end query
     glQueryCounter(queries[5], GL_TIMESTAMP);
 
-    // Custom model render time
+    // Custom model render time start query
     glQueryCounter(queries[2], GL_TIMESTAMP);
+
     spaceship.render(projCameraWorld);
+
+    // Custom model render time end query
     glQueryCounter(queries[3], GL_TIMESTAMP);
 
     spaceship.update(state.animation.time);
@@ -660,14 +660,12 @@ int main() try {
       OGL_CHECKPOINT_DEBUG();
     }
 
-    // Benchmark end query
+    // Full render time end query
     glQueryCounter(queries[1], GL_TIMESTAMP);
 
     // End Screens
-    GLint stopTimerAvailable = 0;
-    while (!stopTimerAvailable) {
-        glGetQueryObjectiv(queries[1], GL_QUERY_RESULT_AVAILABLE, &stopTimerAvailable);
-    }
+
+    // Get timestamp queries for benchmarking
     GLuint64 fullRenderStartTime, fullRenderEndTime, customRenderStartTime, customRenderEndTime, otherRenderStartTime, otherRenderEndTime;
     glGetQueryObjectui64v(queries[0], GL_QUERY_RESULT, &fullRenderStartTime);
     glGetQueryObjectui64v(queries[1], GL_QUERY_RESULT, &fullRenderEndTime);
@@ -675,13 +673,13 @@ int main() try {
     glGetQueryObjectui64v(queries[3], GL_QUERY_RESULT, &customRenderEndTime);
     glGetQueryObjectui64v(queries[4], GL_QUERY_RESULT, &otherRenderStartTime);
     glGetQueryObjectui64v(queries[5], GL_QUERY_RESULT, &otherRenderEndTime);
+
+    // Calculate time delta
     double fRenderTime = (fullRenderEndTime - fullRenderStartTime); // time in nanoseconds
     double cRenderTime = (customRenderEndTime - customRenderStartTime);
     double oRenderTime = (otherRenderEndTime - otherRenderStartTime);
 
-    // printf("fRenderTime: %f\ncRenderTime: %f\noRenderTime: %f\n", fRenderTime, cRenderTime, oRenderTime);
-    // printf("\nRender time: %f\n", fRenderTime);
-
+    // Push deltas to respective vectors
     fullRenderTime.push_back(fRenderTime);
     customRenderTime.push_back(cRenderTime);
     otherRenderTime.push_back(oRenderTime);
@@ -710,7 +708,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
   if (GLFW_KEY_ESCAPE == aKey && GLFW_PRESS == aAction) {
     glfwSetWindowShouldClose(aWindow, GLFW_TRUE);
 
-    // Write code to csv
+    // Write render times from vectors to respective csv files
     std::ofstream myfile;
     int vsize;
 
