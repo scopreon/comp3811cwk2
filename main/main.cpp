@@ -71,11 +71,11 @@ struct State_ {
   CamCtrl_ splitTrackingCameraStatic;
 
   bool splitScreenActive = 0;
-  bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
+  bool activeScreen = 0; // false/0 = screen 0; true/1 = screen 1
 
 
   unsigned int mainCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
-  unsigned int splitCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
+  unsigned int splitCameraType = 0; // same for this
 
   struct Animation_ {
     bool animated;
@@ -87,6 +87,7 @@ void glfw_callback_error_(int, char const *);
 
 void glfw_callback_key_(GLFWwindow *, int, int, int, int);
 void glfw_callback_motion_(GLFWwindow *, double, double);
+void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods);
 
 struct GLFWCleanupHelper {
   ~GLFWCleanupHelper();
@@ -149,6 +150,7 @@ int main() try {
 
   glfwSetKeyCallback(window, &glfw_callback_key_);
   glfwSetCursorPosCallback(window, &glfw_callback_motion_);
+  glfwSetMouseButtonCallback(window, &mouse_click_callback_);
 
   // Set up drawing stuff
   glfwMakeContextCurrent(window);
@@ -174,10 +176,7 @@ int main() try {
   // Global GL state
   OGL_CHECKPOINT_ALWAYS();
 
-  // TODO: global GL setup goes here
-
   glEnable(GL_FRAMEBUFFER_SRGB);
-  //   glEnable(GL_CULL_FACE);
 
   glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
@@ -192,19 +191,23 @@ int main() try {
 
   glViewport(0, 0, iwidth, iheight);
 
+  // Set shader programs
   ShaderProgram prog({{GL_VERTEX_SHADER, "assets/default.vert"},
                       {GL_FRAGMENT_SHADER, "assets/default.frag"}});
 
+  ShaderProgram ui({{GL_VERTEX_SHADER, "assets/2dshader.vert"},
+                      {GL_FRAGMENT_SHADER, "assets/2dshader.frag"}});
+
   state.prog = &prog;
-  //   state.camControl.radius = 10.f;
 
   auto last = Clock::now();
 
   float angle = 0.f;
 
-  std::vector<GLuint> vaos;
-  std::vector<std::size_t> vertexCounts;
-  std::vector<GLuint> textures;
+  // Load objects to be rendered
+  std::vector<GLuint> vaos, ui_vaos;
+  std::vector<std::size_t> vertexCounts, vertexCountsUI;
+  std::vector<GLuint> textures, ui_texture;
   std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d("assets/L4343A-4k.jpeg");
@@ -215,6 +218,7 @@ int main() try {
   vertexCounts.push_back(map.positions.size());
   textures.push_back(tex);
 
+  // Load in launchpad 1 and transform each vertex to the location we want
   auto launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
@@ -225,11 +229,13 @@ int main() try {
     p = pTransformed;
   }
 
+  // Create VAO
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
 
+  // Load in launchpad 1 and transform each vertex to the location we want
   launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
@@ -240,28 +246,17 @@ int main() try {
     p = pTransformed;
   }
 
+  // Create VAO
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
-  // return 0;
 
-  //   auto spaceship =
-  //       make_spaceship(10, kIdentity44f * make_translation({-10.f,
-  //       -0.9f, 15.f}) *
-  //                              make_scaling(0.1f, 0.1f, 0.1f));
-  // return 0;
-  //   for (const auto &p : shape.normals) {
-  //     printf("%f, %f, %f\n", p.x, p.y, p.z);
-  //   }
-
+  // Creating spaceship
   Spaceship spaceship(10, kIdentity44f *
                               make_translation({-10.f, -0.9f, 15.f}) *
                               make_scaling(0.1f, 0.1f, 0.1f));
-  //   vao = create_vao(spaceship);
-  //   vaos.push_back(vao);
-  //   vertexCounts.push_back(spaceship.positions.size());
-  //   textures.push_back(0);
+
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -285,6 +280,19 @@ int main() try {
       std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point initialTime =
       std::chrono::steady_clock::now();
+
+  SimpleMeshData rectangle, button_one, button_two;
+
+  // 2D UI Boxes
+  GLuint ui_vao = create_rectangle({ -0.8f, 0.8f, 0.0f }, { -0.6f, 0.8f, 0.0f }, { -0.8f, 0.6f, 0.0f }, { -0.6f, 0.6f, 0.0f }, rectangle);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(rectangle.positions.size());
+  ui_vao = create_rectangle({ 0.4f, -0.6f, 0.0f }, { 0.1f, -0.6f, 0.0f }, { 0.4f, -0.8f, 0.0f }, { 0.1f, -0.8f, 0.0f }, button_one);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(button_one.positions.size());
+  ui_vao = create_rectangle({ -0.4f, -0.6f, 0.0f }, { -0.1f, -0.6f, 0.0f }, { -0.4f, -0.8f, 0.0f }, { -0.1f, -0.8f, 0.0f }, button_two);
+  ui_vaos.push_back(ui_vao);
+  vertexCountsUI.push_back(button_two.positions.size());
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
@@ -341,17 +349,6 @@ int main() try {
         glViewport(0, 0, fbwidth, fbheight);
     }
 
-    // angle += dt * kPi_ * 0.3f;
-    // if (angle >= 2.f * kPi_)
-    //   angle -= 2.f * kPi_;
-
-    // Update camera state
-    // Assuming state.camControl.theta and state.camControl.phi are the camera
-    // direction angles
-
-
-    // If statement depending on camera
-
     Mat44f model2world = make_rotation_y(0);
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
     Mat44f projection;
@@ -371,7 +368,9 @@ int main() try {
 
     Mat44f Rx, Ry, T;
 
-    if (state.mainCameraType == 0)
+    // Get Rx, Ry and T based on which camera is active
+
+    if (state.mainCameraType == 0) // Main camera with movement
     {
       if (state.camControl.moveForward) {
         state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
@@ -411,7 +410,7 @@ int main() try {
       T = make_translation(
           {state.camControl.x, state.camControl.y, -state.camControl.z});
     }
-    else if (state.mainCameraType == 1)
+    else if (state.mainCameraType == 1) // Main camera following rocketship with x, y, z
     {
       state.mainTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
       state.mainTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
@@ -427,7 +426,7 @@ int main() try {
       T = make_translation(
           {-state.mainTrackingCameraDynamic.x, -state.mainTrackingCameraDynamic.y, -state.mainTrackingCameraDynamic.z});
     }
-    else if (state.mainCameraType == 2)
+    else if (state.mainCameraType == 2) // Main camera following rocketship with camera angle
     {
       state.mainTrackingCameraStatic.x = spaceship.location.x;
       state.mainTrackingCameraStatic.y = spaceship.location.y + 0.5;
@@ -515,6 +514,21 @@ int main() try {
     glBindVertexArray(0);
     glUseProgram(0);
 
+    glUseProgram(ui.programId());
+    glDisable(GL_DEPTH_TEST);
+
+    glUniform3fv(0, 1, baseColor);
+
+    for (int i = 0; i < ui_vaos.size(); i++) {
+      glBindVertexArray(ui_vaos[i]);
+      glDrawArrays(GL_TRIANGLES, 0, vertexCountsUI[i]);
+    }
+
+    glBindVertexArray( 0 );
+    glUseProgram( 0 );
+
+    glEnable(GL_DEPTH_TEST);
+
     OGL_CHECKPOINT_DEBUG();
     
     // Screen 2
@@ -533,7 +547,9 @@ int main() try {
                                     // mathematical constants)
           (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
 
-      if (state.splitCameraType == 0) {
+      // Get Rx, Ry and T based on which camera is active
+
+      if (state.splitCameraType == 0) { // Split camera with movement
         if (state.splitCam.moveForward) {
           state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
                                 sin(state.splitCam.phi) *
@@ -571,7 +587,7 @@ int main() try {
         T = make_translation(
           {state.splitCam.x, state.splitCam.y, -state.splitCam.z});
       }
-      else if (state.splitCameraType == 1)
+      else if (state.splitCameraType == 1) // Split camera following rocketship with x, y, z
       {
         state.splitTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
         state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
@@ -587,7 +603,7 @@ int main() try {
         T = make_translation(
             {-state.splitTrackingCameraDynamic.x, -state.splitTrackingCameraDynamic.y, -state.splitTrackingCameraDynamic.z});
       }
-      else if (state.splitCameraType == 2)
+      else if (state.splitCameraType == 2) // Split camera following rocketship with camera angle
       {
         state.splitTrackingCameraStatic.x = spaceship.location.x;
         state.splitTrackingCameraStatic.y = spaceship.location.y + 0.5;
@@ -656,6 +672,8 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, 0);
       glBindVertexArray(0);
       glUseProgram(0);
+
+     
 
       OGL_CHECKPOINT_DEBUG();
     }
@@ -740,24 +758,14 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
   }
 
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    // R-key reloads shaders.
+    // R-key resets animation.
     if (GLFW_KEY_R == aKey && GLFW_PRESS == aAction) {
-      //   if (state->prog) {
-      //     try {
-      //       state->prog->reload();
-      //       std::fprintf(stderr, "Shaders reloaded and recompiled.\n");
-      //     } catch (std::exception const &eErr) {
-      //       std::fprintf(stderr, "Error when reloading shader:\n");
-      //       std::fprintf(stderr, "%s\n", eErr.what());
-      //       std::fprintf(stderr, "Keeping old shader.\n");
-      //     }
-      //   }
       state->animation.animated = false;
       state->animation.time = 0;
     }
+    // F-key starts animation.
     if (GLFW_KEY_F == aKey && GLFW_PRESS == aAction) {
       state->animation.animated = true;
-      //   state->animation.time = 0;
     }
     // Space toggles camera
     if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction) {
@@ -786,6 +794,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       state->splitCam.moveLeft = false;
       state->splitCam.moveRight = false;
 
+      // Cycle camera type for main camera
       if (state->mainCameraType == 0)
         state->mainCameraType = 1;
       else if (state->mainCameraType == 1)
@@ -802,6 +811,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       state->camControl.moveLeft = false;
       state->camControl.moveRight = false;
 
+      // Cycle camera type for split camera
       if (state->splitCameraType == 0)
         state->splitCameraType = 1;
       else if (state->splitCameraType == 1)
@@ -837,6 +847,11 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       if (GLFW_KEY_LEFT_SHIFT == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.speed = 1.5f;
+        else if (GLFW_RELEASE == aAction)
+          state->camControl.speed = 1.f;
+      } else if (GLFW_KEY_LEFT_CONTROL == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->camControl.speed = 0.5f;
         else if (GLFW_RELEASE == aAction)
           state->camControl.speed = 1.f;
       }
@@ -910,7 +925,52 @@ void glfw_callback_motion_(GLFWwindow *aWindow, double aX, double aY) {
     }
   }
 }
-} // namespace
+  void mouse_click_callback_(GLFWwindow* window, int button, int action, int mods) {
+    if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(window))) {
+      if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+
+        double xpos = 0, ypos = 0;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
+        float rect_left = -0.4f;
+        float rect_right = -0.1f;
+        float rect_top = -0.6f;
+        float rect_bottom = -0.8f;
+
+        int rectangle_x_one = static_cast<int>((rect_left + 1.0) * 0.5 * width);
+        int rectangle_x_two = static_cast<int>((rect_right + 1.0) * 0.5 * width);
+        int rectangle_y_one = static_cast<int>((1.0 - rect_top) * 0.5 * height);
+        int rectangle_y_two = static_cast<int>((1.0 - rect_bottom) * 0.5 * height);
+
+        float rect_left_two = 0.1f;
+        float rect_right_two = 0.4f;
+        float rect_top_two = -0.6f;
+        float rect_bottom_two = -0.8f;
+
+        int rectangle_two_x_one = static_cast<int>((rect_left_two + 1.0) * 0.5 * width);
+        int rectangle_two_x_two = static_cast<int>((rect_right_two + 1.0) * 0.5 * width);
+        int rectangle_two_y_one = static_cast<int>((1.0 - rect_top_two) * 0.5 * height);
+        int rectangle_two_y_two = static_cast<int>((1.0 - rect_bottom_two) * 0.5 * height);
+
+        if (rectangle_x_one <= xpos && rectangle_x_two >= xpos && 
+            rectangle_y_one <= ypos && rectangle_y_two >= ypos) {
+          // In left rectangle, launch spaceship
+          state->animation.animated = true;
+        }
+        else if (rectangle_two_x_one <= xpos && rectangle_two_x_two >= xpos && 
+                rectangle_two_y_one <= ypos && rectangle_two_y_two >= ypos) {
+          // In right rectangle, reset spaceship
+          state->animation.animated = false;
+          state->animation.time = 0;
+        }
+      }
+    }
+  }
+}
+ // namespace
 
 namespace {
 GLFWCleanupHelper::~GLFWCleanupHelper() { glfwTerminate(); }

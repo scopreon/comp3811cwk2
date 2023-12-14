@@ -22,13 +22,11 @@ public:
     void render(Mat44f projCameraWorld);
     int numVertices;
     
-    float speed;
     float angle;
-
-
+    
     Vec3f offset;
     Vec3f location;
-    // void Spawn(const ParticleInit& particleInit);
+
 private:
 	GLuint spaceshipVAO;
 };

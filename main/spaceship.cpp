@@ -9,6 +9,7 @@
 #include "../vmlib/vec3.hpp"
 #include "simple_mesh.hpp"
 
+// rendering a spaceship
 void Spaceship::render(Mat44f projCameraWorld) {
   ShaderProgram prog({{GL_VERTEX_SHADER, "assets/spaceship.vert"},
                       {GL_FRAGMENT_SHADER, "assets/spaceship.frag"}});
@@ -21,6 +22,7 @@ void Spaceship::render(Mat44f projCameraWorld) {
   glUniform3f(7, 0.05f, 0.05f, 0.05f);
   glUniformMatrix4fv(0, 1, GL_TRUE, projCameraWorld.v);
 
+  // move it, rotate, move it back
   glUniformMatrix4fv(
       3, 1, GL_TRUE,
       (make_translation({location.x + offset.x, location.y + offset.y,
@@ -44,6 +46,8 @@ void Spaceship::update(float ts) {
   angle = atan(angleNumerator / angleDenominator) - kPi_ / 2;
 }
 
+
+// Creating spaceship using 7 shapes (3 different types)
 Spaceship::Spaceship(std::size_t aSubdivs, Mat44f aPreTransform) {
 
   Vec4f p4{0, 0, 0, 1.f};
