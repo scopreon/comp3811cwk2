@@ -5,6 +5,8 @@
 #include "simple_mesh.hpp"
 #include <iostream>
 
+
+// cross product for Vectors
 inline Vec3f cross(Vec3f aLeft, Vec3f aRight) noexcept {
   return Vec3f{aLeft.y * aRight.z - aLeft.z * aRight.y,
                aLeft.z * aRight.x - aLeft.x * aRight.z,
@@ -31,9 +33,7 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     Vec3f vertex3{1.f, prevY, prevZ};
     Vec3f vertex4{1.f, y, z};
 
-    // Calculate normals for each triangle
     Vec3f normal1 = normalize(cross(vertex2 - vertex4, vertex2 - vertex3));
-    // Vec3f normal2 = normalize(cross(vertex3 - vertex2, vertex4 - vertex2));
     Vec3f normal2 = normal1;
     pos.push_back(vertex1);
     pos.push_back(vertex2);
@@ -72,7 +72,6 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
       pos.push_back(Vec3f{0.f, y, z});
       pos.push_back(Vec3f{0.f, 0, 0});
 
-      // Normals for capped triangles
       Vec3f normalCap = Vec3f{1,0,0};
       Vec3f normalCap2 = -normalCap;
 
@@ -106,7 +105,7 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     normal = normalize(N * normal);
   }
 
-  //   // Transform positions
+  // Transform positions
   for (auto &p : pos) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
     Vec4f t = aPreTransform * p4;
@@ -137,13 +136,11 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     float y = std::cos(angle);
     float z = std::sin(angle);
 
-    // Vec3f vertex1{0.f, prevY, prevZ};
     Vec3f vertex2{0.f, 0, 0};
     Vec3f vertex3{1.f, prevY, prevZ};
     Vec3f vertex4{1.f, y, z};
 
     // Calculate normals for each triangle
-    // Vec3f normal1 = normalize(cross(vertex2 - vertex1, vertex3 - vertex1));
     Vec3f normal2 = normalize(cross(vertex2 - vertex4, vertex2 - vertex3));
     Vec3f normal1 = normal2;
     // Two triangles (= 3*2 positions) create one segment of the cylinder’s
@@ -192,7 +189,7 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
 
   // Transform and normalize normals
   for (auto &normal : normals) {
-    normal = normalize(N * normal);s
+    normal = normalize(N * normal);
   }
 
   // Transform positions
@@ -211,6 +208,7 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
                         std::move(texcoords)};
 }
 
+// prism is just cylinder with n sides
 SimpleMeshData make_prism(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
                           Mat44f aPreTransform) {
   return make_cylinder(aCapped, aSubdivs, aColor, aPreTransform);
