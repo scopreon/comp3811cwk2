@@ -184,6 +184,7 @@ int main() try {
 
   glViewport(0, 0, iwidth, iheight);
 
+  // Set shader programs
   ShaderProgram prog({{GL_VERTEX_SHADER, "assets/default.vert"},
                       {GL_FRAGMENT_SHADER, "assets/default.frag"}});
 
@@ -196,6 +197,7 @@ int main() try {
 
   float angle = 0.f;
 
+  // Load objects to be rendered
   std::vector<GLuint> vaos, ui_vaos;
   std::vector<std::size_t> vertexCounts, vertexCountsUI;
   std::vector<GLuint> textures, ui_texture;
@@ -274,6 +276,7 @@ int main() try {
 
   SimpleMeshData rectangle, button_one, button_two;
 
+  // 2D UI Boxes
   GLuint ui_vao = create_rectangle({ -0.8f, 0.8f, 0.0f }, { -0.6f, 0.8f, 0.0f }, { -0.8f, 0.6f, 0.0f }, { -0.6f, 0.6f, 0.0f }, rectangle);
   ui_vaos.push_back(ui_vao);
   vertexCountsUI.push_back(rectangle.positions.size());
@@ -352,7 +355,8 @@ int main() try {
     Mat44f Rx, Ry, T;
 
     // Get Rx, Ry and T based on which camera is active
-    if (state.mainCameraType == 0)
+
+    if (state.mainCameraType == 0) // Main camera with movement
     {
       if (state.camControl.moveForward) {
         state.camControl.x -= state.camControl.speed * kMovementPerSecond_ * dt *
@@ -392,7 +396,7 @@ int main() try {
       T = make_translation(
           {state.camControl.x, state.camControl.y, -state.camControl.z});
     }
-    else if (state.mainCameraType == 1)
+    else if (state.mainCameraType == 1) // Main camera following rocketship with x, y, z
     {
       state.mainTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
       state.mainTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
@@ -408,7 +412,7 @@ int main() try {
       T = make_translation(
           {-state.mainTrackingCameraDynamic.x, -state.mainTrackingCameraDynamic.y, -state.mainTrackingCameraDynamic.z});
     }
-    else if (state.mainCameraType == 2)
+    else if (state.mainCameraType == 2) // Main camera following rocketship with camera angle
     {
       state.mainTrackingCameraStatic.x = spaceship.location.x;
       state.mainTrackingCameraStatic.y = spaceship.location.y + 0.5;
@@ -518,7 +522,8 @@ int main() try {
           (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
 
       // Get Rx, Ry and T based on which camera is active
-      if (state.splitCameraType == 0) {
+
+      if (state.splitCameraType == 0) { // Split camera with movement
         if (state.splitCam.moveForward) {
           state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
                                 sin(state.splitCam.phi) *
@@ -556,7 +561,7 @@ int main() try {
         T = make_translation(
           {state.splitCam.x, state.splitCam.y, -state.splitCam.z});
       }
-      else if (state.splitCameraType == 1)
+      else if (state.splitCameraType == 1) // Split camera following rocketship with x, y, z
       {
         state.splitTrackingCameraDynamic.x = spaceship.location.x + spaceship.offset.x;
         state.splitTrackingCameraDynamic.y = spaceship.location.y + spaceship.offset.y + 0.5;
@@ -572,7 +577,7 @@ int main() try {
         T = make_translation(
             {-state.splitTrackingCameraDynamic.x, -state.splitTrackingCameraDynamic.y, -state.splitTrackingCameraDynamic.z});
       }
-      else if (state.splitCameraType == 2)
+      else if (state.splitCameraType == 2) // Split camera following rocketship with camera angle
       {
         state.splitTrackingCameraStatic.x = spaceship.location.x;
         state.splitTrackingCameraStatic.y = spaceship.location.y + 0.5;
@@ -711,6 +716,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       state->splitCam.moveLeft = false;
       state->splitCam.moveRight = false;
 
+      // Cycle camera type for main camera
       if (state->mainCameraType == 0)
         state->mainCameraType = 1;
       else if (state->mainCameraType == 1)
@@ -727,6 +733,7 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       state->camControl.moveLeft = false;
       state->camControl.moveRight = false;
 
+      // Cycle camera type for split camera
       if (state->splitCameraType == 0)
         state->splitCameraType = 1;
       else if (state->splitCameraType == 1)
