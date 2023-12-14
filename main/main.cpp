@@ -64,11 +64,11 @@ struct State_ {
   CamCtrl_ splitTrackingCameraStatic;
 
   bool splitScreenActive = 0;
-  bool activeScreen = 0; // false/0 for screen 0; true/1 for screen 1
+  bool activeScreen = 0; // false/0 = screen 0; true/1 = screen 1
 
 
   unsigned int mainCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
-  unsigned int splitCameraType = 0; // 0 = normal; 1 = tracking camera dynamic; 2 = tracking camera static
+  unsigned int splitCameraType = 0; // same for this
 
   struct Animation_ {
     bool animated;
@@ -169,10 +169,7 @@ int main() try {
   // Global GL state
   OGL_CHECKPOINT_ALWAYS();
 
-  // TODO: global GL setup goes here
-
   glEnable(GL_FRAMEBUFFER_SRGB);
-  //   glEnable(GL_CULL_FACE);
 
   glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
@@ -194,7 +191,6 @@ int main() try {
                       {GL_FRAGMENT_SHADER, "assets/2dshader.frag"}});
 
   state.prog = &prog;
-  //   state.camControl.radius = 10.f;
 
   auto last = Clock::now();
 
@@ -212,8 +208,6 @@ int main() try {
   vaos.push_back(vao);
   vertexCounts.push_back(map.positions.size());
   textures.push_back(tex);
-
-
 
   // Load in launchpad 1 and transform each vertex to the location we want
   auto launchhpad = load_wavefront_obj("assets/landingpad.obj");
@@ -338,8 +332,6 @@ int main() try {
         glViewport(0, 0, fbwidth, fbheight);
     }
 
-    // If statement depending on camera
-
     Mat44f model2world = make_rotation_y(0);
     Mat44f world2camera = make_translation({0.f, 0.f, 0.f});
     Mat44f projection;
@@ -359,6 +351,7 @@ int main() try {
 
     Mat44f Rx, Ry, T;
 
+    // Get Rx, Ry and T based on which camera is active
     if (state.mainCameraType == 0)
     {
       if (state.camControl.moveForward) {
@@ -431,10 +424,6 @@ int main() try {
       T = make_translation(
           {-state.mainTrackingCameraStatic.x, -state.mainTrackingCameraStatic.y, -state.mainTrackingCameraStatic.z});
     }
-
-    // End if
-
-
 
     world2camera = world2camera * (Rx * Ry * T);
     Mat44f projCameraWorld = projection * world2camera * model2world;
@@ -528,6 +517,7 @@ int main() try {
                                     // mathematical constants)
           (fbwidth/2) / float(fbheight), 0.1f, 100.0f);
 
+      // Get Rx, Ry and T based on which camera is active
       if (state.splitCameraType == 0) {
         if (state.splitCam.moveForward) {
           state.splitCam.x -= state.splitCam.speed * kMovementPerSecond_ * dt *
@@ -656,7 +646,7 @@ int main() try {
 
       OGL_CHECKPOINT_DEBUG();
     }
-    // End Screens
+    // End of screem 1
     
     // Display results
     glfwSwapBuffers(window);
