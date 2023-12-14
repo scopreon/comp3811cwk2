@@ -202,13 +202,10 @@ int main() try {
 
   auto last = Clock::now();
 
-  float angle = 0.f;
-
   // Load objects to be rendered
   std::vector<GLuint> vaos, ui_vaos;
   std::vector<std::size_t> vertexCounts, vertexCountsUI;
   std::vector<GLuint> textures, ui_texture;
-  std::size_t vertexCount = 0;
 
   GLuint tex = load_texture_2d("assets/L4343A-4k.jpeg");
 
@@ -277,8 +274,6 @@ int main() try {
   particle.PositionVariation = {0.1f, 0.1f, 0.1f};
 
   std::chrono::steady_clock::time_point prevTime =
-      std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point initialTime =
       std::chrono::steady_clock::now();
 
   SimpleMeshData rectangle, button_one, button_two;

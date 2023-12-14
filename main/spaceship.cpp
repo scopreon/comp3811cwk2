@@ -107,13 +107,8 @@ Spaceship::Spaceship(std::size_t aSubdivs, Mat44f aPreTransform) {
                                      make_scaling(2, 0.5, 0.5)));
   SimpleMeshData spaceship;
   for (auto shape : shapes) {
-    std::cout << "adding spaceship" << std::endl;
-    std::cout << shape.positions.size() << std::endl;
-    ;
     spaceship = concatenate(spaceship, shape);
   }
-  std::cout << spaceship.positions.size() << std::endl;
-
   numVertices = spaceship.positions.size();
   spaceshipVAO = create_vao(spaceship);
 }
