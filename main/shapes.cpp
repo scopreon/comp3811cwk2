@@ -35,9 +35,6 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     Vec3f normal1 = normalize(cross(vertex2 - vertex4, vertex2 - vertex3));
     // Vec3f normal2 = normalize(cross(vertex3 - vertex2, vertex4 - vertex2));
     Vec3f normal2 = normal1;
-    std::cout << normal1.x << normal1.y << normal1.z << std::endl;
-    // Two triangles (= 3*2 positions) create one segment of the cylinder’s
-    // shell.
     pos.push_back(vertex1);
     pos.push_back(vertex2);
     pos.push_back(vertex3);
@@ -106,10 +103,7 @@ SimpleMeshData make_cylinder(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
 
   // Transform and normalize normals
   for (auto &normal : normals) {
-    std::cout << normal.x << " "
-              << " " << normal.y << " " << normal.z << std::endl;
     normal = normalize(N * normal);
-    std::cout << normal.x << normal.y << normal.z << std::endl;
   }
 
   //   // Transform positions
@@ -152,7 +146,6 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
     // Vec3f normal1 = normalize(cross(vertex2 - vertex1, vertex3 - vertex1));
     Vec3f normal2 = normalize(cross(vertex2 - vertex4, vertex2 - vertex3));
     Vec3f normal1 = normal2;
-    std::cout << normal1.x << normal1.y << normal1.z << std::endl;
     // Two triangles (= 3*2 positions) create one segment of the cylinder’s
     // shell.
     pos.push_back(vertex2);
@@ -199,10 +192,7 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
 
   // Transform and normalize normals
   for (auto &normal : normals) {
-    std::cout << normal.x << " "
-              << " " << normal.y << " " << normal.z << std::endl;
-    normal = normalize(N * normal);
-    std::cout << normal.x << normal.y << normal.z << std::endl;
+    normal = normalize(N * normal);s
   }
 
   // Transform positions
