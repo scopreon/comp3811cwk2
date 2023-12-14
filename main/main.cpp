@@ -213,6 +213,9 @@ int main() try {
   vertexCounts.push_back(map.positions.size());
   textures.push_back(tex);
 
+
+
+  // Load in launchpad 1 and transform each vertex to the location we want
   auto launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
@@ -223,11 +226,13 @@ int main() try {
     p = pTransformed;
   }
 
+  // Create VAO
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
 
+  // Load in launchpad 1 and transform each vertex to the location we want
   launchhpad = load_wavefront_obj("assets/landingpad.obj");
   for (auto &p : launchhpad.positions) {
     Vec4f p4{p.x, p.y, p.z, 1.f};
@@ -238,28 +243,17 @@ int main() try {
     p = pTransformed;
   }
 
+  // Create VAO
   vao = create_vao(launchhpad);
   vaos.push_back(vao);
   vertexCounts.push_back(launchhpad.positions.size());
   textures.push_back(0);
-  // return 0;
 
-  //   auto spaceship =
-  //       make_spaceship(10, kIdentity44f * make_translation({-10.f,
-  //       -0.9f, 15.f}) *
-  //                              make_scaling(0.1f, 0.1f, 0.1f));
-  // return 0;
-  //   for (const auto &p : shape.normals) {
-  //     printf("%f, %f, %f\n", p.x, p.y, p.z);
-  //   }
-
+  // Creating spaceship
   Spaceship spaceship(10, kIdentity44f *
                               make_translation({-10.f, -0.9f, 15.f}) *
                               make_scaling(0.1f, 0.1f, 0.1f));
-  //   vao = create_vao(spaceship);
-  //   vaos.push_back(vao);
-  //   vertexCounts.push_back(spaceship.positions.size());
-  //   textures.push_back(0);
+
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -343,15 +337,6 @@ int main() try {
       else
         glViewport(0, 0, fbwidth, fbheight);
     }
-
-    // angle += dt * kPi_ * 0.3f;
-    // if (angle >= 2.f * kPi_)
-    //   angle -= 2.f * kPi_;
-
-    // Update camera state
-    // Assuming state.camControl.theta and state.camControl.phi are the camera
-    // direction angles
-
 
     // If statement depending on camera
 
@@ -700,24 +685,14 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
   }
 
   if (auto *state = static_cast<State_ *>(glfwGetWindowUserPointer(aWindow))) {
-    // R-key reloads shaders.
+    // R-key resets animation.
     if (GLFW_KEY_R == aKey && GLFW_PRESS == aAction) {
-      //   if (state->prog) {
-      //     try {
-      //       state->prog->reload();
-      //       std::fprintf(stderr, "Shaders reloaded and recompiled.\n");
-      //     } catch (std::exception const &eErr) {
-      //       std::fprintf(stderr, "Error when reloading shader:\n");
-      //       std::fprintf(stderr, "%s\n", eErr.what());
-      //       std::fprintf(stderr, "Keeping old shader.\n");
-      //     }
-      //   }
       state->animation.animated = false;
       state->animation.time = 0;
     }
+    // F-key starts animation.
     if (GLFW_KEY_F == aKey && GLFW_PRESS == aAction) {
       state->animation.animated = true;
-      //   state->animation.time = 0;
     }
     // Space toggles camera
     if (GLFW_KEY_SPACE == aKey && GLFW_PRESS == aAction) {
@@ -797,6 +772,11 @@ void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mod
       if (GLFW_KEY_LEFT_SHIFT == aKey) {
         if (GLFW_PRESS == aAction)
           state->camControl.speed = 1.5f;
+        else if (GLFW_RELEASE == aAction)
+          state->camControl.speed = 1.f;
+      } else if (GLFW_KEY_LEFT_CONTROL == aKey) {
+        if (GLFW_PRESS == aAction)
+          state->camControl.speed = 0.5f;
         else if (GLFW_RELEASE == aAction)
           state->camControl.speed = 1.f;
       }
