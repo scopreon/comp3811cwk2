@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include <ostream>
+#include <fstream>
 
 #include "../support/checkpoint.hpp"
 #include "../support/debug_output.hpp"
@@ -32,6 +34,11 @@
 #include "texture.hpp"
 
 #include "particle_system.hpp"
+
+// Vectors to hold render times for benchmarking
+std::vector<double> fullRenderTime;
+std::vector<double> customRenderTime;
+std::vector<double> otherRenderTime;
 
 namespace {
 constexpr char const *kWindowTitle = "COMP3811 - CW2";
@@ -290,6 +297,11 @@ int main() try {
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
   glEnable(GL_DEPTH_TEST);
 
+
+  // Benchmarking
+  GLuint queries[6];
+  glGenQueries(6, queries);
+
   // Main loop
   while (!glfwWindowShouldClose(window)) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -310,6 +322,8 @@ int main() try {
     last = now;
 
     // Screen 0
+    // Full render time start query
+    glQueryCounter(queries[0], GL_TIMESTAMP);
 
     // Check if window was resized.
     float fbwidth, fbheight;
@@ -455,6 +469,9 @@ int main() try {
     glDisable(GL_BLEND);
     // Particle System end
 
+    // Full render time start query
+    glQueryCounter(queries[4], GL_TIMESTAMP);
+
     glUseProgram(prog.programId());
 
     glUniformMatrix4fv(2, 1, GL_TRUE, projCameraWorld.v);
@@ -478,8 +495,17 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, textures[i]);
       glDrawArrays(GL_TRIANGLES, 0, vertexCounts[i]);
     }
+    // Other render time end query
+    glQueryCounter(queries[5], GL_TIMESTAMP);
+
+    // Custom model render time start query
+    glQueryCounter(queries[2], GL_TIMESTAMP);
 
     spaceship.render(projCameraWorld);
+
+    // Custom model render time end query
+    glQueryCounter(queries[3], GL_TIMESTAMP);
+
     spaceship.update(state.animation.time);
     particle.Position = spaceship.location + spaceship.offset;
     glUseProgram(prog.programId());
@@ -651,7 +677,30 @@ int main() try {
 
       OGL_CHECKPOINT_DEBUG();
     }
-    // End of screem 1
+
+    // Full render time end query
+    glQueryCounter(queries[1], GL_TIMESTAMP);
+
+    // End Screens
+
+    // Get timestamp queries for benchmarking
+    GLuint64 fullRenderStartTime, fullRenderEndTime, customRenderStartTime, customRenderEndTime, otherRenderStartTime, otherRenderEndTime;
+    glGetQueryObjectui64v(queries[0], GL_QUERY_RESULT, &fullRenderStartTime);
+    glGetQueryObjectui64v(queries[1], GL_QUERY_RESULT, &fullRenderEndTime);
+    glGetQueryObjectui64v(queries[2], GL_QUERY_RESULT, &customRenderStartTime);
+    glGetQueryObjectui64v(queries[3], GL_QUERY_RESULT, &customRenderEndTime);
+    glGetQueryObjectui64v(queries[4], GL_QUERY_RESULT, &otherRenderStartTime);
+    glGetQueryObjectui64v(queries[5], GL_QUERY_RESULT, &otherRenderEndTime);
+
+    // Calculate time delta
+    double fRenderTime = (fullRenderEndTime - fullRenderStartTime); // time in nanoseconds
+    double cRenderTime = (customRenderEndTime - customRenderStartTime);
+    double oRenderTime = (otherRenderEndTime - otherRenderStartTime);
+
+    // Push deltas to respective vectors
+    fullRenderTime.push_back(fRenderTime);
+    customRenderTime.push_back(cRenderTime);
+    otherRenderTime.push_back(oRenderTime);
     
     // Display results
     glfwSwapBuffers(window);
@@ -676,6 +725,35 @@ void glfw_callback_error_(int aErrNum, char const *aErrDesc) {
 void glfw_callback_key_(GLFWwindow *aWindow, int aKey, int, int aAction, int mods) {
   if (GLFW_KEY_ESCAPE == aKey && GLFW_PRESS == aAction) {
     glfwSetWindowShouldClose(aWindow, GLFW_TRUE);
+
+    // Write render times from vectors to respective csv files
+    std::ofstream myfile;
+    int vsize;
+
+    myfile.open("fullTime.csv");
+    vsize = fullRenderTime.size();
+    for (int n=0; n<vsize; n++)
+    {
+        myfile << fullRenderTime[n] << std::endl;
+    }
+    myfile.close();
+
+    myfile.open("customModelTime.csv");
+    vsize = customRenderTime.size();
+    for (int n=0; n<vsize; n++)
+    {
+        myfile << customRenderTime[n] << std::endl;
+    }
+    myfile.close();
+
+    myfile.open("oTime.csv");
+    vsize = otherRenderTime.size();
+    for (int n=0; n<vsize; n++)
+    {
+        myfile << otherRenderTime[n] << std::endl;
+    }
+    myfile.close();
+
     return;
   }
 
