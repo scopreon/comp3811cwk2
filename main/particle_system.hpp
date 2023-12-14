@@ -43,8 +43,8 @@ private:
 
 		bool Active = false;
 	};
-	std::vector<Particle> m_ParticlePool;
-	uint32_t m_PoolIndex = 999;
+	std::vector<Particle> particlePool;
+	uint32_t poolIndex = 999;
 
-	GLuint m_CubeVA = 0;
+	GLuint cubeVA = 0;
 };

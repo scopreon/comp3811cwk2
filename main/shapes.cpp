@@ -142,7 +142,6 @@ SimpleMeshData make_cone(bool aCapped, std::size_t aSubdivs, Vec3f aColor,
 
     // Calculate normals for each triangle
     Vec3f normal2 = normalize(cross(vertex2 - vertex4, vertex2 - vertex3));
-    Vec3f normal1 = normal2;
     // Two triangles (= 3*2 positions) create one segment of the cylinder’s
     // shell.
     pos.push_back(vertex2);

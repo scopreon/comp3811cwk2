@@ -484,7 +484,7 @@ int main() try {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 
-    for (int i = 0; i < vaos.size(); i++) {
+    for (unsigned int i = 0; i < vaos.size(); i++) {
       glBindVertexArray(vaos[i]);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, textures[i]);
@@ -514,7 +514,7 @@ int main() try {
 
     glUniform3fv(0, 1, baseColor);
 
-    for (int i = 0; i < ui_vaos.size(); i++) {
+    for (unsigned int i = 0; i < ui_vaos.size(); i++) {
       glBindVertexArray(ui_vaos[i]);
       glDrawArrays(GL_TRIANGLES, 0, vertexCountsUI[i]);
     }
@@ -653,7 +653,7 @@ int main() try {
       glBindTexture(GL_TEXTURE_2D, 0);
       glBindVertexArray(0);
 
-      for (int i = 0; i < vaos.size(); i++) {
+      for (unsigned int i = 0; i < vaos.size(); i++) {
         glBindVertexArray(vaos[i]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textures[i]);

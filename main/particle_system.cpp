@@ -27,13 +27,13 @@ Vec4f lerp(const Vec4f& a, const Vec4f& b, float t) {
 // Constructor sets ParticlePool vector to size 1000
 ParticleSystem::ParticleSystem()
 {
-	m_ParticlePool.resize(1000);
+	particlePool.resize(1000);
 }
 
 // Update particles function
 void ParticleSystem::Update(float ts)
 {
-	for (auto& particle : m_ParticlePool)
+	for (auto& particle : particlePool)
 	{
 		if (!particle.Active)
 			continue;
@@ -57,7 +57,7 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
                         {GL_FRAGMENT_SHADER, "assets/particle.frag"}});
 
 
-    if (!m_CubeVA)
+    if (!cubeVA)
     {
         float vertices[] = {
             // Front face
@@ -97,8 +97,8 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
             -0.05f, -0.05f, -0.05f
         };
 
-        glGenVertexArrays(1, &m_CubeVA);
-        glBindVertexArray(m_CubeVA);
+        glGenVertexArrays(1, &cubeVA);
+        glBindVertexArray(cubeVA);
 
         GLuint cubeVB, cubeIB;
         glGenBuffers(1, &cubeVB);
@@ -125,7 +125,7 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
 	glUseProgram(prog.programId());
 	glUniformMatrix4fv(0, 1, GL_TRUE, projCameraWorld.v);
 
-	for (auto& particle : m_ParticlePool)
+	for (auto& particle : particlePool)
 	{
 		if (!particle.Active)
 			continue;
@@ -144,7 +144,7 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
 
 		glUniformMatrix4fv(1, 1, GL_TRUE, transform.v);
 		glUniform4f(2,color.x, color.y, color.z, color.w);
-		glBindVertexArray(m_CubeVA);
+		glBindVertexArray(cubeVA);
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 	}
 }
@@ -153,7 +153,7 @@ void ParticleSystem::Render(Mat44f projCameraWorld)
 void ParticleSystem::Spawn(const ParticleInit& particleInit)
 {   
     // Get current index of particle pool
-	Particle& particle = m_ParticlePool[m_PoolIndex];
+	Particle& particle = particlePool[poolIndex];
 
     // Set particle to active
 	particle.Active = true;
@@ -186,5 +186,5 @@ void ParticleSystem::Spawn(const ParticleInit& particleInit)
 	particle.SizeEnd = particleInit.SizeEnd;
 
     // Update pool index
-	m_PoolIndex = --m_PoolIndex % m_ParticlePool.size();
+	poolIndex = --poolIndex % particlePool.size();
 }
